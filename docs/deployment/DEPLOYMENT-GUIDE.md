@@ -1,8 +1,8 @@
 # Panduan Deployment KostKita — Proxmox Homelab
 
-> **Status 3 November 2026: BLOCKED untuk aktivasi produksi.** Public Actions API pada 22:18 WIB menunjukkan workflow legacy ID `405389177` masih active dengan nol run pada lima status nonterminal. Run terakhir `41630886365` sukses lewat workflow lama pada SHA `main` saat ini. Workflow belum dapat dinonaktifkan karena sesi ini tidak memiliki kanal Actions write. `main` `protected:false`, rulesets kosong dan environment production belum ada. Identitas LXC/runner, runtime, resource, ingress, backup dan restore juga belum diverifikasi langsung. Deployment, migrasi, restart dan perubahan live tetap memerlukan persetujuan produksi terpisah.
+> **Status 3 November 2026: BLOCKED untuk aktivasi produksi.** Public Actions API pada 22:53 WIB menunjukkan workflow legacy ID `405389177` masih active dengan nol run pada lima status nonterminal. Run terakhir `41630886365` sukses lewat workflow lama pada SHA `main` saat ini. Workflow belum dapat dinonaktifkan karena sesi ini tidak memiliki kanal Actions write. `main` `protected:false`, rulesets kosong dan environment production belum ada. Identitas LXC/runner, runtime, resource, ingress, backup dan restore juga belum diverifikasi langsung. Deployment, migrasi, restart dan perubahan live tetap memerlukan persetujuan produksi terpisah.
 
-Remediasi repository dan status uji tercatat dalam [rencana remediasi](../../REMEDIATION-PLAN.md). Workflow remote masih legacy; no-run check terakhir pada 22:18 WIB kosong, namun workflow tetap aktif. Workflow lokal bukan bukti keadaan GitHub dan belum dipush. Panduan ini mencatat gerbang operasional, bukan bukti layanan aktif. [HOMELAB-SSOT](HOMELAB-SSOT.md) menjadi acuan gateway bersama; [ADR-004](../decisions/ADR-004-proxmox-docker-deployment.md) mencatat keputusan KostKita. Bukti dan akses yang masih dibutuhkan ada pada [Infrastructure Verification Report](../../INFRASTRUCTURE-VERIFICATION-REPORT.md) dan [Production Readiness Checklist](../../PRODUCTION-READINESS-CHECKLIST.md).
+Remediasi repository dan status uji tercatat dalam [rencana remediasi](../../REMEDIATION-PLAN.md). Workflow remote masih legacy; no-run check terakhir pada 22:53 WIB kosong, namun workflow tetap aktif. Workflow lokal bukan bukti keadaan GitHub dan belum dipush. Panduan ini mencatat gerbang operasional, bukan bukti layanan aktif. [HOMELAB-SSOT](HOMELAB-SSOT.md) menjadi acuan gateway bersama; [ADR-004](../decisions/ADR-004-proxmox-docker-deployment.md) mencatat keputusan KostKita. Bukti dan akses yang masih dibutuhkan ada pada [Infrastructure Verification Report](../../INFRASTRUCTURE-VERIFICATION-REPORT.md) dan [Production Readiness Checklist](../../PRODUCTION-READINESS-CHECKLIST.md).
 
 ## 1. Gerbang menuju produksi
 
@@ -16,15 +16,15 @@ Gerbang tetap **BLOCKED** jika bukti tidak tersedia, termasuk ketika implementas
 
 ## 2. Identitas dan arsitektur yang ditargetkan
 
-| Item              | Target terdokumentasi; bukan observasi live                                                                               |
-| ----------------- | ------------------------------------------------------------------------------------------------------------------------- |
-| Proxmox           | Server Mamay, bridge `vmbr0`                                                                                              |
-| LXC aplikasi      | ID `10026`, `192.168.0.26/24`; pemilik menyatakan sudah dibuat. Hostname dan kondisi aktual belum diverifikasi.           |
-| Ingress           | LXC `10080`, `192.168.0.80`, Cloudflare Tunnel remote-managed dan Traefik File Provider                                   |
-| Runtime target    | PHP-FPM/Laravel, nginx dan PostgreSQL melalui Docker Compose pada LXC aplikasi yang sama; image dibangun lokal tanpa GHCR |
-| HTTP dan domain   | `192.168.0.26:8080`, `https://kostkita.sequein.my.id`; listener dan routing belum diverifikasi                            |
-| Source            | [`belajar-self-hosted/kost-kita`](https://github.com/belajar-self-hosted/kost-kita), branch deployment `main`             |
-| Resource baseline | 2 vCPU, 2 GB RAM dan disk 20–32 GB adalah titik awal, bukan bukti kapasitas cukup                                         |
+| Item              | Target terdokumentasi; bukan observasi live                                                                                                                                                                           |
+| ----------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Proxmox           | Server Mamay, bridge `vmbr0`                                                                                                                                                                                          |
+| LXC aplikasi      | ID `10026`, `192.168.0.26/24`; pemilik menyatakan sudah dibuat. Hostname dan kondisi aktual belum diverifikasi.                                                                                                       |
+| Ingress           | LXC `10080`, `192.168.0.80`, Cloudflare Tunnel remote-managed dan Traefik File Provider                                                                                                                               |
+| Runtime target    | PHP-FPM/Laravel, nginx dan PostgreSQL melalui Docker Compose pada LXC aplikasi yang sama; image dibangun lokal tanpa GHCR                                                                                             |
+| HTTP dan domain   | Pada 22:53 WIB, `/up` merespons HTTP 200 melalui `192.168.0.26:8080` dan `https://kostkita.sequein.my.id`; route OS ke IP memakai `en9`. Identitas LXC dan pemetaan Cloudflare ke origin tersebut belum diverifikasi. |
+| Source            | [`belajar-self-hosted/kost-kita`](https://github.com/belajar-self-hosted/kost-kita), branch deployment `main`                                                                                                         |
+| Resource baseline | 2 vCPU, 2 GB RAM dan disk 20–32 GB adalah titik awal, bukan bukti kapasitas cukup                                                                                                                                     |
 
 Alur target: `Client → Cloudflare Tunnel → cloudflared/Traefik di gateway → IP dan port HTTP LXC aplikasi → Laravel`; PostgreSQL berada pada jaringan privat Compose, tanpa port publik. Jangan membuat tunnel kedua atau memakai gateway ingress sebagai host build aplikasi. Firewall LXC pernah dinyatakan nonaktif oleh pemilik; keadaan aktual dan keputusan pembatasan akses LAN harus diperiksa tanpa mengubah firewall secara otomatis.
 

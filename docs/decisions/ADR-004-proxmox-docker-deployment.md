@@ -47,7 +47,7 @@ Browser --HTTPS--> Cloudflare Edge
 
 > **Gerbang produksi:** perubahan repository telah diizinkan, tetapi aktivasi produksi, migrasi, restart dan perubahan infrastruktur live memerlukan persetujuan terpisah. Identitas host/runner, backup dan restore serta kesiapan layanan masih **BLOCKED** sampai ada bukti live. Lihat [panduan](../deployment/DEPLOYMENT-GUIDE.md) dan [rencana remediasi](../../REMEDIATION-PLAN.md).
 
-> **Status workflow remote, 3 November 2026 pukul 22:18 WIB:** deploy workflow legacy ID `405389177` masih `active`; public API tidak menunjukkan run pada status `queued`, `in_progress`, `waiting`, `requested`, atau `pending`. Run `41630886365` sukses pukul 18:54 WIB pada current `main` SHA dan menjalankan workflow legacy. Workflow lokal yang diremediasi belum di-push. `main` `protected:false`, rulesets kosong, environment production tidak ada; Actions permissions dan runner inventory belum dapat dibaca tanpa autentikasi. Workflow belum dinonaktifkan karena tidak tersedia sesi Actions write.
+> **Status workflow remote, 3 November 2026 pukul 22:53 WIB:** deploy workflow legacy ID `405389177` masih `active`; public API tidak menunjukkan run pada status `queued`, `in_progress`, `waiting`, `requested`, atau `pending`. Run `41630886365` sukses pukul 18:54 WIB pada current `main` SHA dan menjalankan workflow legacy. Workflow lokal yang diremediasi belum di-push. `main` `protected:false`, rulesets kosong, environment production tidak ada; Actions permissions dan runner inventory belum dapat dibaca tanpa autentikasi. Workflow belum dinonaktifkan karena tidak tersedia sesi Actions write.
 
 ## Konsekuensi dan trade-off
 
