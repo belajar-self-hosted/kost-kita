@@ -1,6 +1,6 @@
 # Deployment & Rollback Plan
 
-Tanggal: 3 November 2026. **DRAFT / BLOCKED**: dokumen ini bukan otorisasi deployment production. Snapshot Actions pukul 20:21 WIB menunjukkan workflow lama aktif dan tidak ada run nonterminal saat itu. Pemeriksaan ulang pukul 21:37 WIB tidak dapat mengakses halaman repository GitHub (“Page not found”), dan akses `Actions: write` tidak tersedia. State run terbaru tidak diketahui; workflow belum dinonaktifkan dan tidak ada job dibatalkan. Gate di workspace lokal belum berlaku di GitHub. Arsitektur target tetap GitHub Actions → runner di LXC aplikasi → build Compose lokal → aktivasi; tanpa GHCR.
+Tanggal 3 November 2026. **DRAFT / BLOCKED**: dokumen ini bukan otorisasi deployment production. Public Actions API pada 22:18 WIB menunjukkan workflow legacy ID `405389177` masih active, dengan nol run pada lima status nonterminal yang diperiksa. Run terakhir `41630886365` sukses pukul 18:54 WIB menggunakan workflow lama; runner fisiknya belum diverifikasi. Workflow belum dinonaktifkan karena sesi yang tersedia tidak menyediakan Actions write; tidak ada job yang dibatalkan. `main` tidak terlindungi dan environment production belum ada. Gate di workspace lokal belum berlaku di GitHub. Arsitektur target tetap GitHub Actions → runner di LXC aplikasi → build Compose lokal → aktivasi; tanpa GHCR.
 
 ## Prasyarat dan kriteria keputusan
 
