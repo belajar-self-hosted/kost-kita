@@ -29,6 +29,7 @@
 ### Task 1: Define and validate report filters and datasets
 
 **Files:**
+
 - Create: `app/Support/Reports/ReportFilters.php`
 - Create: `app/Support/Reports/ReportQueryService.php`
 - Create: `tests/Feature/Owner/OwnerReportsTest.php`
@@ -44,6 +45,7 @@
 ### Task 2: Build cash-flow and historical invoice reports
 
 **Files:**
+
 - Create: `app/Support/Reports/CashFlowReportQuery.php`
 - Create: `app/Support/Reports/InvoiceReportQuery.php`
 - Modify: `app/Models/CashTransaction.php`, `Invoice.php`, or `InvoiceBalanceService.php` only if relations are needed for the read-only report query.
@@ -59,6 +61,7 @@
 ### Task 3: Build booking, tenancy, and maintenance reports
 
 **Files:**
+
 - Create: `app/Support/Reports/BookingReportQuery.php`
 - Create: `app/Support/Reports/TenancyReportQuery.php`
 - Create: `app/Support/Reports/MaintenanceReportQuery.php`
@@ -73,6 +76,7 @@
 ### Task 4: Add matching XLSX and PDF export writers
 
 **Files:**
+
 - Modify: `composer.json`, `composer.lock` (add `phpoffice/phpspreadsheet` and `dompdf/dompdf` after checking PHP/extension compatibility).
 - Create: `app/Support/Reports/ReportExportService.php`
 - Create: `resources/views/exports/report-pdf.blade.php`
@@ -89,6 +93,7 @@
 ### Task 5: Implement dashboard metrics and internal reminders
 
 **Files:**
+
 - Create: `app/Support/Reports/OwnerDashboardSummary.php`
 - Modify: `app/Http/Controllers/Owner/OwnerDashboardController.php`, `resources/js/pages/Owner/Dashboard.svelte`
 - Test: `tests/Feature/Owner/OwnerDashboardTest.php`
@@ -103,6 +108,7 @@
 ### Task 6: Add report pages, filters, navigation, and route coverage
 
 **Files:**
+
 - Create: `app/Http/Controllers/Owner/ReportsController.php`
 - Create: `resources/js/pages/Owner/Reports/Index.svelte` and shared `Show.svelte` for the five report types
 - Modify: `routes/web.php`, `resources/js/components/AppSidebar.svelte`

@@ -1,7 +1,11 @@
 name: Local In-LXC CI/CD Deployment
 
 on:
-  push:
+  workflow_run:
+    workflows:
+      - tests
+    types:
+      - completed
     branches:
       - main
   workflow_dispatch:
@@ -10,20 +14,26 @@ concurrency:
   group: production-deploy-${{ github.ref }}
   cancel-in-progress: false
 
+permissions:
+  contents: read
+
 jobs:
   deploy:
+    if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
     name: Build & In-Place Deploy on LXC 10026
     runs-on: [self-hosted, linux, x64, kostkita]
 
     env:
       APP_DIR: /opt/kostkita/src
       ENV_FILE: /opt/kostkita/.env
-      APP_PORT: 8026
+      APP_PORT: 8080
       APP_IP: 192.168.0.26
 
     steps:
       - name: Checkout Source Code
-        uses: actions/checkout@v4
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
 
       - name: Verify Environment File Exists
         run: |

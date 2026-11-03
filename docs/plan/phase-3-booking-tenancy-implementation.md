@@ -30,6 +30,7 @@
 ### Task 1: Add behavior-first coverage for the shared booking and tenancy rules
 
 **Files:**
+
 - Create: `tests/Feature/Owner/BookingAvailabilityTest.php`
 - Create: `tests/Feature/Owner/BookingNoShowTest.php`
 - Create: `tests/Feature/Owner/TenancyLifecycleTest.php`
@@ -49,6 +50,7 @@
 ### Task 2: Persist resident, booking, tenancy, maintenance blocker, and initial billing records
 
 **Files:**
+
 - Create: `database/migrations/2026_11_03_000008_create_residents_table.php`
 - Create: `database/migrations/2026_11_03_000009_create_bookings_table.php`
 - Create: `database/migrations/2026_11_03_000010_create_tenancies_table.php`
@@ -76,6 +78,7 @@
 ### Task 3: Build the single availability and lock service
 
 **Files:**
+
 - Create: `app/Support/RoomAvailabilityService.php`
 - Create: `app/Support/PropertyAvailabilityLock.php` only if it prevents duplicated lock-order code across services.
 - Modify: `app/Http/Controllers/Owner/RoomController.php`, `app/Http/Controllers/Owner/PropertyController.php`, `app/Support/RoomPriceService.php` only where needed for availability integration.
@@ -92,6 +95,7 @@
 ### Task 4: Implement resident and booking owner workflows
 
 **Files:**
+
 - Create: `app/Policies/ResidentPolicy.php`, `BookingPolicy.php`
 - Create: `app/Http/Controllers/Owner/ResidentController.php`, `BookingController.php`
 - Create: `app/Support/BookingService.php`
@@ -112,6 +116,7 @@
 ### Task 5: Implement direct check-in, booking conversion, tenancy lifecycle, and initial invoices
 
 **Files:**
+
 - Create: `app/Policies/TenancyPolicy.php`, `InvoicePolicy.php`
 - Create: `app/Http/Controllers/Owner/TenancyController.php`, `AvailabilityController.php`
 - Create: `app/Support/TenancyService.php`, `MonthlyBillingCycle.php`, `InitialInvoiceService.php`
@@ -134,6 +139,7 @@
 ### Task 6: Implement maintenance blockers and the owner availability view
 
 **Files:**
+
 - Create: `app/Policies/MaintenanceJobPolicy.php`, `app/Http/Controllers/Owner/MaintenanceController.php`
 - Create: `app/Support/MaintenanceScheduleService.php`
 - Create: `resources/js/pages/Owner/Maintenance/{Index,Create,Show}.svelte`

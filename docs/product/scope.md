@@ -6,18 +6,18 @@ Pemilik menetapkan rilis pertama mencakup semua modul utama, termasuk laporan. D
 
 ## Kemampuan produk
 
-| Area | Kemampuan yang tercatat | Detail aturan |
-|---|---|---|
-| Dasbor pemilik | Ringkasan properti/kamar, okupansi, pengingat jatuh tempo, akhir masa sewa, aktivitas terbaru, dan metrik keuangan | [UI](../ux/requirements.md), [keuangan](../business/finance.md) |
-| Properti dan kamar | Kelola beberapa properti, detail properti, kamar, fasilitas, tipe kamar, harga, dan status operasional | [Model data](../data/model.md), [ketersediaan](../business/availability.md) |
-| Harga | Harga per kamar atau tipe dengan periode bulanan; perubahan tidak menulis ulang kesepakatan lama | [Booking dan masa sewa](../business/booking-tenancy.md) |
-| Booking | Catat calon penyewa, periode, harga kesepakatan, status, uang muka; expiry NO_SHOW otomatis setelah grace period; konversi ke check-in | [Booking dan masa sewa](../business/booking-tenancy.md) |
-| Penyewa dan masa sewa | Simpan identitas penyewa terpisah dari riwayat masa sewa; dukung check-in langsung, check-out, dan perpanjangan | [Booking dan masa sewa](../business/booking-tenancy.md) |
-| Keuangan | Tagihan bulanan otomatis, pembayaran penuh/parsial, saldo, satu liability deposit jaminan yang dapat dibayar saat booking, refund/settlement, biaya servis, dan biaya operasional | [Keuangan](../business/finance.md), [perawatan](../business/maintenance.md) |
-| Perawatan | Riwayat kerusakan dan servis, jadwal, biaya, status pengerjaan, vendor, serta hubungan opsional ke kamar | [Perawatan](../business/maintenance.md) |
-| Laporan | Ringkasan kas, rincian kas masuk/keluar, masa sewa, maintenance, booking, serta saldo tagihan; ekspor XLSX dan PDF disebutkan | [Keuangan](../business/finance.md) |
-| Akun platform | Registrasi dan login pemilik, pemulihan kata sandi, verifikasi email, serta administrasi platform oleh Super Admin | [Keamanan dan Akses](../security/access-control.md) |
-| Pengelola | Akun staf dengan akses terbatas | Tidak termasuk login MVP; role MVP hanya Super Admin dan Pemilik. |
+| Area                  | Kemampuan yang tercatat                                                                                                                                                           | Detail aturan                                                               |
+| --------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------- |
+| Dasbor pemilik        | Ringkasan properti/kamar, okupansi, pengingat jatuh tempo, akhir masa sewa, aktivitas terbaru, dan metrik keuangan                                                                | [UI](../ux/requirements.md), [keuangan](../business/finance.md)             |
+| Properti dan kamar    | Kelola beberapa properti, detail properti, kamar, fasilitas, tipe kamar, harga, dan status operasional                                                                            | [Model data](../data/model.md), [ketersediaan](../business/availability.md) |
+| Harga                 | Harga per kamar atau tipe dengan periode bulanan; perubahan tidak menulis ulang kesepakatan lama                                                                                  | [Booking dan masa sewa](../business/booking-tenancy.md)                     |
+| Booking               | Catat calon penyewa, periode, harga kesepakatan, status, uang muka; expiry NO_SHOW otomatis setelah grace period; konversi ke check-in                                            | [Booking dan masa sewa](../business/booking-tenancy.md)                     |
+| Penyewa dan masa sewa | Simpan identitas penyewa terpisah dari riwayat masa sewa; dukung check-in langsung, check-out, dan perpanjangan                                                                   | [Booking dan masa sewa](../business/booking-tenancy.md)                     |
+| Keuangan              | Tagihan bulanan otomatis, pembayaran penuh/parsial, saldo, satu liability deposit jaminan yang dapat dibayar saat booking, refund/settlement, biaya servis, dan biaya operasional | [Keuangan](../business/finance.md), [perawatan](../business/maintenance.md) |
+| Perawatan             | Riwayat kerusakan dan servis, jadwal, biaya, status pengerjaan, vendor, serta hubungan opsional ke kamar                                                                          | [Perawatan](../business/maintenance.md)                                     |
+| Laporan               | Ringkasan kas, rincian kas masuk/keluar, masa sewa, maintenance, booking, serta saldo tagihan; ekspor XLSX dan PDF disebutkan                                                     | [Keuangan](../business/finance.md)                                          |
+| Akun platform         | Registrasi dan login pemilik, pemulihan kata sandi, verifikasi email, serta administrasi platform oleh Super Admin                                                                | [Keamanan dan Akses](../security/access-control.md)                         |
+| Pengelola             | Akun staf dengan akses terbatas                                                                                                                                                   | Tidak termasuk login MVP; role MVP hanya Super Admin dan Pemilik.           |
 
 ## User flow yang menjadi baseline
 

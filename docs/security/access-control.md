@@ -2,12 +2,12 @@
 
 ## Role dan status keputusan
 
-| Aktor | Izin yang tercatat | Status |
-|---|---|---|
-| Pemilik kost | Mengelola properti/kamar, booking, penyewa, pembayaran, perawatan, laporan, serta kontak tenant melalui WhatsApp | MVP |
-| Super Admin | Melihat daftar dan status seluruh pemilik; mengaktifkan/menonaktifkan akun; mengelola akun sesuai kewenangan; melihat statistik jumlah pemilik aktif, properti, dan kamar | Baseline; akses ke data operasional lintas tenant harus punya alasan dan batas eksplisit |
-| Pengelola/staf | Akun dengan akses terbatas | Tidak memiliki login pada MVP |
-| Penyewa | Dicatat oleh pemilik; tidak memiliki akun atau akses aplikasi | Tidak memiliki login |
+| Aktor          | Izin yang tercatat                                                                                                                                                        | Status                                                                                   |
+| -------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------- |
+| Pemilik kost   | Mengelola properti/kamar, booking, penyewa, pembayaran, perawatan, laporan, serta kontak tenant melalui WhatsApp                                                          | MVP                                                                                      |
+| Super Admin    | Melihat daftar dan status seluruh pemilik; mengaktifkan/menonaktifkan akun; mengelola akun sesuai kewenangan; melihat statistik jumlah pemilik aktif, properti, dan kamar | Baseline; akses ke data operasional lintas tenant harus punya alasan dan batas eksplisit |
+| Pengelola/staf | Akun dengan akses terbatas                                                                                                                                                | Tidak memiliki login pada MVP                                                            |
+| Penyewa        | Dicatat oleh pemilik; tidak memiliki akun atau akses aplikasi                                                                                                             | Tidak memiliki login                                                                     |
 
 MVP hanya memiliki dua role login: Super Admin dan Pemilik Kost. Jangan membuat route atau akun login staf pada MVP; jika kebutuhan itu muncul untuk rilis berikutnya, tentukan matriks izinnya terlebih dahulu.
 

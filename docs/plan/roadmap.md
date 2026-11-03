@@ -6,17 +6,17 @@ Selesaikan analisis kebutuhan, jawaban pertanyaan terbuka yang memengaruhi fitur
 
 Sebelum modul mulai dibuat, siapkan dan tinjau artefak berikut:
 
-| Artefak | Sumber canonical | Kriteria siap |
-|---|---|---|
-| Requirements dan asumsi | product/overview.md, product/scope.md, decisions/open-questions.md | Cakupan modul dan keputusan yang memengaruhinya sudah jelas. |
-| Arsitektur dan alur data | architecture/overview.md serta ADR bila perlu | Batas frontend/backend, autentikasi, database, dan deployment yang relevan telah disetujui. |
-| ERD dan aturan integritas | data/model.md, data/relational-schema.md | Relasi fisik, tenant ownership, FK komposit, indeks, nilai IDR, dan retensi dapat ditinjau sebelum migration. |
-| Role dan izin | security/access-control.md | Setiap aktor dan aksi pada modul memiliki aturan izin yang tegas. |
-| Flow dan state-transition matrix | business/availability.md, business/booking-tenancy.md, business/finance.md | Transisi booking dan tenancy, hasil terhadap saldo, dampak jadwal/kas, serta konflik/error sudah ditentukan. |
-| Route/action dan validasi | architecture/route-actions.md | Setiap operasi memiliki method/path, action, input, validasi, otorisasi, hasil Inertia, dan scope data sebelum coding modul. |
-| Struktur halaman | ux/requirements.md | Halaman, state loading/empty/error, navigasi, dan tindakan sensitif dapat ditelusuri. |
-| Acceptance dan strategi test | quality/testing.md | Setiap aturan kritis memiliki pemeriksaan yang dapat lulus/gagal. |
-| Roadmap | Dokumen ini | Dependensi dan kriteria keluar fase jelas; scope MVP sudah ditetapkan di product/scope.md. |
+| Artefak                          | Sumber canonical                                                           | Kriteria siap                                                                                                                |
+| -------------------------------- | -------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
+| Requirements dan asumsi          | product/overview.md, product/scope.md, decisions/open-questions.md         | Cakupan modul dan keputusan yang memengaruhinya sudah jelas.                                                                 |
+| Arsitektur dan alur data         | architecture/overview.md serta ADR bila perlu                              | Batas frontend/backend, autentikasi, database, dan deployment yang relevan telah disetujui.                                  |
+| ERD dan aturan integritas        | data/model.md, data/relational-schema.md                                   | Relasi fisik, tenant ownership, FK komposit, indeks, nilai IDR, dan retensi dapat ditinjau sebelum migration.                |
+| Role dan izin                    | security/access-control.md                                                 | Setiap aktor dan aksi pada modul memiliki aturan izin yang tegas.                                                            |
+| Flow dan state-transition matrix | business/availability.md, business/booking-tenancy.md, business/finance.md | Transisi booking dan tenancy, hasil terhadap saldo, dampak jadwal/kas, serta konflik/error sudah ditentukan.                 |
+| Route/action dan validasi        | architecture/route-actions.md                                              | Setiap operasi memiliki method/path, action, input, validasi, otorisasi, hasil Inertia, dan scope data sebelum coding modul. |
+| Struktur halaman                 | ux/requirements.md                                                         | Halaman, state loading/empty/error, navigasi, dan tindakan sensitif dapat ditelusuri.                                        |
+| Acceptance dan strategi test     | quality/testing.md                                                         | Setiap aturan kritis memiliki pemeriksaan yang dapat lulus/gagal.                                                            |
+| Roadmap                          | Dokumen ini                                                                | Dependensi dan kriteria keluar fase jelas; scope MVP sudah ditetapkan di product/scope.md.                                   |
 
 ## Urutan kerja dasar
 

@@ -17,24 +17,24 @@ Implementasi deployment harus menyediakan runtime HTTP Laravel yang production-r
 
 ## 2. Nilai infrastruktur KostKita
 
-| Item | Nilai atau ketetapan |
-|---|---|
-| Hypervisor | Proxmox VE — Server Mamay |
-| LAN | `192.168.0.0/24`, gateway `192.168.0.1`, bridge `vmbr0` |
-| Ingress | LXC `10080`, `192.168.0.80`, Cloudflare Tunnel remote-managed, Traefik File Provider |
-| Target Traefik | `v3.7.17`; versi aktif harus diverifikasi dan diperbarui sebelum go-live |
-| LXC aplikasi KostKita | ID `10026`, IP `192.168.0.26`; sudah dibuat, berbeda dari ingress `10080` |
-| OS/container | Debian 13 Trixie, template `debian-13-standard_13.6-1` |
-| Fitur/resource LXC | `nesting=1`, `keyctl=1`; baseline 2 vCPU, 2 GB RAM, disk 20–32 GB perlu diverifikasi terhadap konfigurasi aktual |
-| Firewall LXC | Nonaktif menurut pemilik; jangan ubah tanpa persetujuan |
-| Docker dan runner | Belum dikonfigurasi menurut pemilik; verifikasi sebelum install |
-| Aplikasi dan database | Docker Compose pada LXC aplikasi yang sama |
-| Database | PostgreSQL pada network internal Compose; port `5432` tidak dipublikasikan |
-| Repository | `https://github.com/belajar-self-hosted/kost-kita.git` |
-| Domain | `sequein.my.id` |
-| Subdomain | `kostkita` |
-| URL publik | `https://kostkita.sequein.my.id` |
-| Port HTTP pada LXC aplikasi | Belum ditetapkan; pilih bersama runtime aplikasi dan catat pada inventaris |
+| Item                        | Nilai atau ketetapan                                                                                             |
+| --------------------------- | ---------------------------------------------------------------------------------------------------------------- |
+| Hypervisor                  | Proxmox VE — Server Mamay                                                                                        |
+| LAN                         | `192.168.0.0/24`, gateway `192.168.0.1`, bridge `vmbr0`                                                          |
+| Ingress                     | LXC `10080`, `192.168.0.80`, Cloudflare Tunnel remote-managed, Traefik File Provider                             |
+| Target Traefik              | `v3.7.17`; versi aktif harus diverifikasi dan diperbarui sebelum go-live                                         |
+| LXC aplikasi KostKita       | ID `10026`, IP `192.168.0.26`; sudah dibuat, berbeda dari ingress `10080`                                        |
+| OS/container                | Debian 13 Trixie, template `debian-13-standard_13.6-1`                                                           |
+| Fitur/resource LXC          | `nesting=1`, `keyctl=1`; baseline 2 vCPU, 2 GB RAM, disk 20–32 GB perlu diverifikasi terhadap konfigurasi aktual |
+| Firewall LXC                | Nonaktif menurut pemilik; jangan ubah tanpa persetujuan                                                          |
+| Docker dan runner           | Belum dikonfigurasi menurut pemilik; verifikasi sebelum install                                                  |
+| Aplikasi dan database       | Docker Compose pada LXC aplikasi yang sama                                                                       |
+| Database                    | PostgreSQL pada network internal Compose; port `5432` tidak dipublikasikan                                       |
+| Repository                  | `https://github.com/belajar-self-hosted/kost-kita.git`                                                           |
+| Domain                      | `sequein.my.id`                                                                                                  |
+| Subdomain                   | `kostkita`                                                                                                       |
+| URL publik                  | `https://kostkita.sequein.my.id`                                                                                 |
+| Port HTTP pada LXC aplikasi | `8080` pada IP `192.168.0.26`; catat pada inventaris layanan                                                     |
 
 Empat nilai identitas deployment yang berubah ketika template digunakan untuk layanan lain adalah ID LXC, IP LXC, domain, dan subdomain. URL publik dibentuk dari subdomain dan domain. Port, credentials, serta storage adalah konfigurasi aplikasi yang harus diputuskan/dibuat pada tahap deployment, bukan pengganti nilai identitas tersebut.
 
@@ -106,13 +106,13 @@ Jika direktori sudah berisi checkout, sinkronkan hanya `/opt/kostkita/src`. Jang
 
 Compose yang akan ditambahkan ke repository harus memenuhi kontrak berikut:
 
-| Service | Tanggung jawab dan batas jaringan |
-|---|---|
-| `app` | Runtime PHP/Laravel; menerima environment aplikasi; dapat mengakses PostgreSQL melalui network Compose privat. |
-| `web` atau runtime HTTP setara | Menyajikan Laravel dan `public/build`; satu-satunya service yang menerbitkan port HTTP ke IP LXC. Port ditetapkan setelah runtime dipilih. |
-| `db` | PostgreSQL dengan volume data persisten dan readiness check; tidak mempunyai `ports:` atau route Traefik. |
-| `scheduler` | Satu instance menjalankan `php artisan schedule:work`; diperlukan untuk expiry no-show, recurring invoice, dan penanda settlement terlambat. |
-| `worker` | Tambahkan hanya bila ada pekerjaan queue yang benar-benar diproses asynchronous. Gunakan image/release yang sama dengan aplikasi. |
+| Service                        | Tanggung jawab dan batas jaringan                                                                                                            |
+| ------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------- |
+| `app`                          | Runtime PHP/Laravel; menerima environment aplikasi; dapat mengakses PostgreSQL melalui network Compose privat.                               |
+| `web` atau runtime HTTP setara | Menyajikan Laravel dan `public/build`; satu-satunya service yang menerbitkan port HTTP ke IP LXC. Port ditetapkan setelah runtime dipilih.   |
+| `db`                           | PostgreSQL dengan volume data persisten dan readiness check; tidak mempunyai `ports:` atau route Traefik.                                    |
+| `scheduler`                    | Satu instance menjalankan `php artisan schedule:work`; diperlukan untuk expiry no-show, recurring invoice, dan penanda settlement terlambat. |
+| `worker`                       | Tambahkan hanya bila ada pekerjaan queue yang benar-benar diproses asynchronous. Gunakan image/release yang sama dengan aplikasi.            |
 
 PostgreSQL hanya berada di network internal Compose. Service HTTP memublikasikan port host pada IP LXC `192.168.0.26`, misalnya pola `192.168.0.26:APP_HTTP_PORT:PORT_HTTP_CONTAINER`; jangan memakai port `3000` dari contoh Node.js di HOMELAB-SSOT.
 
@@ -226,19 +226,19 @@ Setelah semua nilai inventory diisi dan smoke test internal lulus, tambahkan `/o
 
 ```yaml
 http:
-  routers:
-    kostkita-router:
-      rule: "Host(`kostkita.sequein.my.id`)"
-      entryPoints:
-        - web
-      service: kostkita-service
+    routers:
+        kostkita-router:
+            rule: 'Host(`kostkita.sequein.my.id`)'
+            entryPoints:
+                - web
+            service: kostkita-service
 
-  services:
-    kostkita-service:
-      loadBalancer:
-        servers:
-          - url: "http://192.168.0.26:<APP_HTTP_PORT>"
-        passHostHeader: true
+    services:
+        kostkita-service:
+            loadBalancer:
+                servers:
+                    - url: 'http://192.168.0.26:<APP_HTTP_PORT>'
+                passHostHeader: true
 ```
 
 Ganti placeholder sebelum menyimpan file. Pastikan nama router/service unik, lalu verifikasi file dimuat Traefik. Pada Cloudflare Zero Trust, arahkan Public Hostname KostKita ke `http://traefik:80` sesuai remote-managed Tunnel. Cloudflare Edge menyajikan HTTPS publik; tidak dibuat tunnel kedua pada LXC aplikasi.

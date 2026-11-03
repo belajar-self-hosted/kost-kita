@@ -32,6 +32,7 @@
 ### Task 1: Generate recurring monthly invoices safely
 
 **Files:**
+
 - Create: `app/Console/Commands/GenerateMonthlyInvoices.php`
 - Modify: `app/Support/MonthlyBillingCycle.php`, `app/Support/InitialInvoiceService.php`, `routes/console.php`
 - Create: `tests/Feature/Owner/RecurringInvoiceGenerationTest.php`
@@ -47,6 +48,7 @@
 ### Task 2: Add immutable cash receipt, allocation, refund, and invoice ledger
 
 **Files:**
+
 - Create migrations: `2026_11_03_000016_create_cash_transaction_tables.php` and `2026_11_03_000017_create_deposit_and_temporary_liability_ledgers.php`
 - Create models: `CashTransaction`, `InvoiceCashAllocation`, `DepositMovement`, `TemporaryLiability`, `TemporaryLiabilityMovement`
 - Create services: `CashTransactionService`, `InvoicePaymentService`, `DepositLedgerService`
@@ -65,6 +67,7 @@
 ### Task 3: Implement owner deposit settlement and private evidence
 
 **Files:**
+
 - Create migration: `2026_11_03_000018_create_deposit_settlement_tables.php`
 - Create models: `DepositSettlement`, `DepositSettlementLine`, `DepositClaimResolution`, `DepositEvidence`
 - Create services: `DepositSettlementService`, private evidence storage service
@@ -83,6 +86,7 @@
 ### Task 4: Add expense obligations and partial cash payments
 
 **Files:**
+
 - Create migration: `2026_11_03_000019_create_expense_tables.php`
 - Create models: `Expense`, `ExpensePayment`
 - Create services: `ExpensePaymentService`
@@ -100,6 +104,7 @@
 ### Task 5: Expose invoice and ledger workflows in owner UI
 
 **Files:**
+
 - Create pages in `resources/js/pages/Owner/Invoices/`, `Payments/`, `Deposits/`, and `Expenses/`.
 - Modify the owner layout/navigation component, tenancy detail, maintenance detail, route definitions, and relevant TypeScript shared types.
 - Create/extend Inertia feature tests in `tests/Feature/Owner/FinancialLedgerTest.php`, `DepositSettlementTest.php`, and `ExpensePaymentTest.php`.

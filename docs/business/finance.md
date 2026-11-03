@@ -41,12 +41,12 @@ Jika check-out terjadi dalam siklus berjalan sebelum invoice siklus itu dibuat o
 
 Saldo kewajiban mengikuti total alokasi pembayaran aktif:
 
-| Kondisi | Status saldo |
-|---|---|
-| Belum ada pembayaran yang dialokasikan | belum dibayar |
-| Ada alokasi, tetapi jumlahnya di bawah nominal kewajiban | dibayar sebagian |
-| Jumlah alokasi sama dengan nominal kewajiban | lunas |
-| Tanggal jatuh tempo lewat dan masih ada saldo | terlambat; kondisi ini dapat bersamaan dengan dibayar sebagian |
+| Kondisi                                                  | Status saldo                                                   |
+| -------------------------------------------------------- | -------------------------------------------------------------- |
+| Belum ada pembayaran yang dialokasikan                   | belum dibayar                                                  |
+| Ada alokasi, tetapi jumlahnya di bawah nominal kewajiban | dibayar sebagian                                               |
+| Jumlah alokasi sama dengan nominal kewajiban             | lunas                                                          |
+| Tanggal jatuh tempo lewat dan masih ada saldo            | terlambat; kondisi ini dapat bersamaan dengan dibayar sebagian |
 
 Refund/reversal mengubah alokasi aktif dan saldo secara terlacak.
 

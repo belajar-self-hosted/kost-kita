@@ -34,25 +34,25 @@ Aturan pemilihan tarif dan snapshot ini juga berlaku pada check-in langsung dan 
 
 ### Status booking
 
-| Status | Arti dan dampak |
-|---|---|
-| pending | Dicatat tetapi belum dikonfirmasi; tidak memblokir ketersediaan pada baseline. |
-| confirmed | Disepakati dan memblokir periode booking. |
-| checked_in | Booking dikonversi menjadi tenancy; tenancy aktual menjadi sumber periode pemblokir. |
-| cancelled | Dibatalkan dan tidak memblokir. Settlement deposit dibicarakan melalui WhatsApp dan dicatat oleh pemilik sesuai [kebijakan deposit](finance.md#deposit-jaminan-security-deposit). |
-| NO_SHOW | Booking confirmed yang belum check-in saat grace period berakhir; tidak memblokir kamar dan tidak otomatis mengembalikan atau menghanguskan deposit. |
+| Status     | Arti dan dampak                                                                                                                                                                   |
+| ---------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| pending    | Dicatat tetapi belum dikonfirmasi; tidak memblokir ketersediaan pada baseline.                                                                                                    |
+| confirmed  | Disepakati dan memblokir periode booking.                                                                                                                                         |
+| checked_in | Booking dikonversi menjadi tenancy; tenancy aktual menjadi sumber periode pemblokir.                                                                                              |
+| cancelled  | Dibatalkan dan tidak memblokir. Settlement deposit dibicarakan melalui WhatsApp dan dicatat oleh pemilik sesuai [kebijakan deposit](finance.md#deposit-jaminan-security-deposit). |
+| NO_SHOW    | Booking confirmed yang belum check-in saat grace period berakhir; tidak memblokir kamar dan tidak otomatis mengembalikan atau menghanguskan deposit.                              |
 
 Konversi booking menjadi check-in harus atomik: validasi ulang jadwal, buat tenancy, hubungkan ke booking, pertahankan liability deposit yang sama tanpa membuat kewajiban atau kas masuk kedua kali, lalu ubah status booking.
 
 ### Transisi booking
 
-| Dari | Ke | Syarat |
-|---|---|---|
-| pending | confirmed | Pemilik mengonfirmasi setelah menyepakati booking. |
-| pending | cancelled | Pemilik membatalkan; status tidak lagi memblokir. |
-| confirmed | checked_in | Check-in berhasil dibuat atomik sebelum waktu expiry; backend memeriksa ulang deadline walau Scheduler terlambat. |
-| confirmed | cancelled | Pemilik membatalkan secara eksplisit; settlement deposit dibicarakan melalui WhatsApp dan dicatat sesuai transaksi aktual tanpa menghapus bukti penerimaan awal. |
-| confirmed | NO_SHOW | Scheduler atau operasi backend yang menemukan deadline terlewati mengubah status secara atomik; check-in setelah expiry ditolak. |
+| Dari      | Ke         | Syarat                                                                                                                                                           |
+| --------- | ---------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| pending   | confirmed  | Pemilik mengonfirmasi setelah menyepakati booking.                                                                                                               |
+| pending   | cancelled  | Pemilik membatalkan; status tidak lagi memblokir.                                                                                                                |
+| confirmed | checked_in | Check-in berhasil dibuat atomik sebelum waktu expiry; backend memeriksa ulang deadline walau Scheduler terlambat.                                                |
+| confirmed | cancelled  | Pemilik membatalkan secara eksplisit; settlement deposit dibicarakan melalui WhatsApp dan dicatat sesuai transaksi aktual tanpa menghapus bukti penerimaan awal. |
+| confirmed | NO_SHOW    | Scheduler atau operasi backend yang menemukan deadline terlewati mengubah status secara atomik; check-in setelah expiry ditolak.                                 |
 
 Status cancelled, NO_SHOW, dan checked_in tidak kembali ke status sebelumnya. Perubahan setelah itu dibuat sebagai tindakan baru yang terlacak.
 
@@ -83,12 +83,12 @@ Status harus konsisten dengan tanggal dan tindakan pengguna. Tanggal akhir masa 
 
 ### Transisi masa sewa
 
-| Dari | Ke | Syarat |
-|---|---|---|
-| scheduled | active | Check-in aktual terjadi. |
-| scheduled | terminated | Masa sewa dibatalkan sebelum mulai dengan tindakan eksplisit. |
-| active | completed | Pemilik mencatat check-out; tenancy tetap active dan kamar tetap terpakai setelah tanggal akhir sampai check-out dicatat. |
-| active | terminated | Pemilik mencatat penghentian lebih awal; tagihan dihitung prorata berdasarkan hari kalender aktual dalam siklus. |
+| Dari      | Ke         | Syarat                                                                                                                    |
+| --------- | ---------- | ------------------------------------------------------------------------------------------------------------------------- |
+| scheduled | active     | Check-in aktual terjadi.                                                                                                  |
+| scheduled | terminated | Masa sewa dibatalkan sebelum mulai dengan tindakan eksplisit.                                                             |
+| active    | completed  | Pemilik mencatat check-out; tenancy tetap active dan kamar tetap terpakai setelah tanggal akhir sampai check-out dicatat. |
+| active    | terminated | Pemilik mencatat penghentian lebih awal; tagihan dihitung prorata berdasarkan hari kalender aktual dalam siklus.          |
 
 completed dan terminated menutup masa sewa; buat masa sewa baru untuk penyewaan berikutnya agar histori tetap utuh. Lewatnya tanggal akhir saja tidak menyelesaikan tenancy atau membuka kamar; pemilik perlu mencatat check-out aktual.
 

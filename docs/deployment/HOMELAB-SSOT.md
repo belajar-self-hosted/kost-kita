@@ -1,4 +1,5 @@
 # MAMAY-HOMELAB-INGRESS-SSOT.md
+
 ## Single Source of Truth — Proxmox Ingress Gateway (Traefik v3 & Cloudflare Tunnel)
 
 > **Status Dokumen:** Production Baseline v1.4 — Comprehensive DevOps Edition.  
@@ -13,27 +14,27 @@
 
 Status setiap nilai ditandai pada kolom **Status**. Nilai **Terverifikasi** menggambarkan konfigurasi aktif yang sudah divalidasi pada infrastruktur Server Mamay. Nilai **Standar**, **Rekomendasi**, atau **Target disetujui** adalah acuan/arah konfigurasi dan tidak membuktikan rollout sudah dilakukan; audit keadaan aktual sebelum perubahan atau go-live.
 
-| Parameter | Nilai / Ketetapan | Status | Keterangan & Lokasi Konfigurasi |
-|---|---|---|---|
-| **Hypervisor Host** | Proxmox VE (Server Mamay) | Terverifikasi | Server fisik Mini PC / Homelab |
-| **Subnet LAN Utama** | `192.168.0.0/24` | Terverifikasi | Jaringan lokal fisik seluruh node & LXC |
-| **Default Gateway LAN** | `192.168.0.1` | Terverifikasi | IP Router fisik (ISP/Mikrotik) |
-| **Gateway LXC ID** | `10080` | Terverifikasi | ID container Proxmox khusus Ingress |
-| **Gateway Hostname** | `gateway-ingress` | Terverifikasi | Hostname OS di `/etc/hostname` |
-| **Gateway IP (Statis)** | `192.168.0.80/24` | Terverifikasi | Alamat IP statis pada interface `eth0` |
-| **Gateway MAC / Bridge** | `vmbr0` | Terverifikasi | Linux Bridge default Proxmox |
-| **DNS Upstream** | `1.1.1.1`, `8.8.8.8` | Terverifikasi | Resolver upstream di `/etc/resolv.conf` |
-| **LXC Features** | `nesting=1, keyctl=1` | Terverifikasi | Wajib untuk Docker Engine unprivileged di PVE |
-| **LXC Resource Baseline**| 2 Core CPU, 2048 MB RAM, 16 GB Disk | Rekomendasi | Alokasi ideal untuk gateway reverse proxy |
-| **OS Template LXC** | Debian 13 (Trixie)  | Standar | Minimal OS image |
-| **Docker Engine** | Docker CE (Latest stable) + Compose Plugin | Terverifikasi | Runtime container di dalam LXC 10080 |
-| **Docker Network** | `web-gateway` | Terverifikasi | External bridge network (`driver: bridge`) |
-| **Working Directory** | `/opt/ingress` | Terverifikasi | Direktori stack Compose & `.env` |
-| **Dynamic Config Dir** | `/opt/ingress/dynamic` | Terverifikasi | Mount host ke `/etc/traefik/dynamic:ro` |
-| **Reverse Proxy Engine** | Target Traefik `v3.7.17`; baseline lama mendokumentasikan `v3.1` | **Target disetujui; rollout belum diverifikasi** | `v3.1` sudah tidak menerima security support. Verifikasi/upgrade gateway aktif sebelum KostKita go-live ([release support](https://doc.traefik.io/traefik/deprecation/releases/)) |
-| **Tunnel Provider** | Cloudflare Tunnel (`cloudflared`) | Terverifikasi | Image `cloudflare/cloudflared:latest` |
-| **Tunnel Management** | Remote-managed (Token-based) | Terverifikasi | Dikelola via Cloudflare Zero Trust Dashboard |
-| **Traefik Dashboard** | `http://192.168.0.80:8080/dashboard/` | Terverifikasi | Mode `--api.insecure=true`, dibatasi khusus LAN |
+| Parameter                 | Nilai / Ketetapan                                                | Status                                           | Keterangan & Lokasi Konfigurasi                                                                                                                                                   |
+| ------------------------- | ---------------------------------------------------------------- | ------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Hypervisor Host**       | Proxmox VE (Server Mamay)                                        | Terverifikasi                                    | Server fisik Mini PC / Homelab                                                                                                                                                    |
+| **Subnet LAN Utama**      | `192.168.0.0/24`                                                 | Terverifikasi                                    | Jaringan lokal fisik seluruh node & LXC                                                                                                                                           |
+| **Default Gateway LAN**   | `192.168.0.1`                                                    | Terverifikasi                                    | IP Router fisik (ISP/Mikrotik)                                                                                                                                                    |
+| **Gateway LXC ID**        | `10080`                                                          | Terverifikasi                                    | ID container Proxmox khusus Ingress                                                                                                                                               |
+| **Gateway Hostname**      | `gateway-ingress`                                                | Terverifikasi                                    | Hostname OS di `/etc/hostname`                                                                                                                                                    |
+| **Gateway IP (Statis)**   | `192.168.0.80/24`                                                | Terverifikasi                                    | Alamat IP statis pada interface `eth0`                                                                                                                                            |
+| **Gateway MAC / Bridge**  | `vmbr0`                                                          | Terverifikasi                                    | Linux Bridge default Proxmox                                                                                                                                                      |
+| **DNS Upstream**          | `1.1.1.1`, `8.8.8.8`                                             | Terverifikasi                                    | Resolver upstream di `/etc/resolv.conf`                                                                                                                                           |
+| **LXC Features**          | `nesting=1, keyctl=1`                                            | Terverifikasi                                    | Wajib untuk Docker Engine unprivileged di PVE                                                                                                                                     |
+| **LXC Resource Baseline** | 2 Core CPU, 2048 MB RAM, 16 GB Disk                              | Rekomendasi                                      | Alokasi ideal untuk gateway reverse proxy                                                                                                                                         |
+| **OS Template LXC**       | Debian 13 (Trixie)                                               | Standar                                          | Minimal OS image                                                                                                                                                                  |
+| **Docker Engine**         | Docker CE (Latest stable) + Compose Plugin                       | Terverifikasi                                    | Runtime container di dalam LXC 10080                                                                                                                                              |
+| **Docker Network**        | `web-gateway`                                                    | Terverifikasi                                    | External bridge network (`driver: bridge`)                                                                                                                                        |
+| **Working Directory**     | `/opt/ingress`                                                   | Terverifikasi                                    | Direktori stack Compose & `.env`                                                                                                                                                  |
+| **Dynamic Config Dir**    | `/opt/ingress/dynamic`                                           | Terverifikasi                                    | Mount host ke `/etc/traefik/dynamic:ro`                                                                                                                                           |
+| **Reverse Proxy Engine**  | Target Traefik `v3.7.17`; baseline lama mendokumentasikan `v3.1` | **Target disetujui; rollout belum diverifikasi** | `v3.1` sudah tidak menerima security support. Verifikasi/upgrade gateway aktif sebelum KostKita go-live ([release support](https://doc.traefik.io/traefik/deprecation/releases/)) |
+| **Tunnel Provider**       | Cloudflare Tunnel (`cloudflared`)                                | Terverifikasi                                    | Image `cloudflare/cloudflared:latest`                                                                                                                                             |
+| **Tunnel Management**     | Remote-managed (Token-based)                                     | Terverifikasi                                    | Dikelola via Cloudflare Zero Trust Dashboard                                                                                                                                      |
+| **Traefik Dashboard**     | `http://192.168.0.80:8080/dashboard/`                            | Terverifikasi                                    | Mode `--api.insecure=true`, dibatasi khusus LAN                                                                                                                                   |
 
 ---
 
@@ -92,6 +93,7 @@ Sistem ini menggunakan pola **Egress-Only Reverse Tunnel**. Server homelab tidak
 ```
 
 ### 2.1 Alur Pemrosesan Request (Hop-by-Hop)
+
 1. **Request Masuk:** Klien internet mengakses `https://app.domainmamay.com`.
 2. **Terminasi SSL di Edge:** Cloudflare Edge menangani sertifikat TLS/SSL publik, inspeksi WAF, dan proteksi DDoS.
 3. **Tunnel Egress:** Paket diteruskan melalui tunnel QUIC aktif ke container `cloudflared` yang berjalan di LXC 10080.
@@ -106,6 +108,7 @@ Sistem ini menggunakan pola **Egress-Only Reverse Tunnel**. Server homelab tidak
 Bagi staff DevOps yang membuat atau memvalidasi LXC Ingress di Proxmox VE, konfigurasi container harus mematuhi spesifikasi berikut.
 
 ### 3.1 File Konfigurasi PVE: `/etc/pve/lxc/10080.conf`
+
 ```text
 arch: amd64
 cores: 2
@@ -122,13 +125,16 @@ unprivileged: 1
 ```
 
 > [!IMPORTANT]
+>
 > - `unprivileged: 1`: Standar keamanan isolasi container Proxmox.
 > - `nesting=1`: Wajib agar Docker daemon dapat membuat namespace cgroups dan veth di dalam LXC.
 > - `keyctl=1`: Wajib untuk Docker unprivileged agar caching kredensial dan overlay2 berjalan stabil tanpa permission error.
 > - `onboot: 1`: Memastikan Ingress Gateway otomatis menyala saat server fisik Proxmox boot.
 
 ### 3.2 Pembuatan LXC via PVE CLI (Opsional / Disaster Recovery)
+
 Jika perlu merekonstruksi container dari Proxmox Host shell, gunakan template Debian 13 Standard terkini yang tersedia pada storage `local`. Perintah berikut memilih template Debian 13 yang sudah diunduh, sehingga tidak tertinggal pada nama versi lama:
+
 ```bash
 DEBIAN13_TEMPLATE_ID="$(pveam list local | awk '$1 ~ /^local:vztmpl\/debian-13-standard_/ {print $1; exit}')"
 if [ -z "$DEBIAN13_TEMPLATE_ID" ]; then
@@ -158,6 +164,7 @@ pct enter 10080
 ## 4. Spesifikasi Stack Docker Ingress
 
 ### 4.1 Layout Direktori Kerja
+
 ```text
 /opt/ingress/
 ├── .env                  # Token Cloudflare Tunnel (Permissions: 600)
@@ -169,6 +176,7 @@ pct enter 10080
 ```
 
 ### 4.2 File Environment: `/opt/ingress/.env`
+
 ```ini
 # Cloudflare Tunnel Token
 # Diambil dari Cloudflare One Dashboard (Networks > Tunnels)
@@ -181,12 +189,13 @@ TRUSTED_CLOUDFLARED_CIDR=
 
 > [!CAUTION]
 > Token ini memberi akses penuh untuk menyambungkan konektor ke akun Cloudflare Anda.
+>
 > - Jangan pernah melakukan commit file `.env` ke repositori Git.
 > - Berikan hak akses terbatas:
->   ```bash
->   chmod 600 /opt/ingress/.env
->   chown root:root /opt/ingress/.env
->   ```
+>     ```bash
+>     chmod 600 /opt/ingress/.env
+>     chown root:root /opt/ingress/.env
+>     ```
 
 ### 4.3 File Stack: `/opt/ingress/docker-compose.yml`
 
@@ -194,43 +203,43 @@ Target yang disetujui memakai Traefik `v3.7.17` dan hanya File Provider untuk ro
 
 ```yaml
 services:
-  traefik:
-    image: traefik:v3.7.17
-    container_name: traefik
-    restart: unless-stopped
-    command:
-      # Dashboard & API
-      - "--api.dashboard=true"
-      - "--api.insecure=true"
-      # Provider File (Koneksi utama ke LXC/VM homelab)
-      - "--providers.file.directory=/etc/traefik/dynamic"
-      - "--providers.file.watch=true"
-      # Entrypoints
-      - "--entrypoints.web.address=:80"
-      - "--entrypoints.web.forwardedheaders.trustedips=${TRUSTED_CLOUDFLARED_CIDR:?set Docker web-gateway subnet}"
-      # Logging level (INFO / WARN / ERROR / DEBUG)
-      - "--log.level=INFO"
-    ports:
-      - "80:80"        # HTTP Entrypoint internal
-      - "8080:8080"    # Traefik Web Dashboard (Akses LAN privat)
-    volumes:
-      - /opt/ingress/dynamic:/etc/traefik/dynamic:ro
-    networks:
-      - web-gateway
+    traefik:
+        image: traefik:v3.7.17
+        container_name: traefik
+        restart: unless-stopped
+        command:
+            # Dashboard & API
+            - '--api.dashboard=true'
+            - '--api.insecure=true'
+            # Provider File (Koneksi utama ke LXC/VM homelab)
+            - '--providers.file.directory=/etc/traefik/dynamic'
+            - '--providers.file.watch=true'
+            # Entrypoints
+            - '--entrypoints.web.address=:80'
+            - '--entrypoints.web.forwardedheaders.trustedips=${TRUSTED_CLOUDFLARED_CIDR:?set Docker web-gateway subnet}'
+            # Logging level (INFO / WARN / ERROR / DEBUG)
+            - '--log.level=INFO'
+        ports:
+            - '80:80' # HTTP Entrypoint internal
+            - '8080:8080' # Traefik Web Dashboard (Akses LAN privat)
+        volumes:
+            - /opt/ingress/dynamic:/etc/traefik/dynamic:ro
+        networks:
+            - web-gateway
 
-  cloudflared:
-    image: cloudflare/cloudflared:latest
-    container_name: cloudflared
-    restart: unless-stopped
-    command: tunnel --no-autoupdate run --token ${TUNNEL_TOKEN}
-    networks:
-      - web-gateway
-    depends_on:
-      - traefik
+    cloudflared:
+        image: cloudflare/cloudflared:latest
+        container_name: cloudflared
+        restart: unless-stopped
+        command: tunnel --no-autoupdate run --token ${TUNNEL_TOKEN}
+        networks:
+            - web-gateway
+        depends_on:
+            - traefik
 
 networks:
-  web-gateway:
-    external: true
+    web-gateway:
+        external: true
 ```
 
 > [!IMPORTANT]
@@ -243,85 +252,93 @@ networks:
 Karena backend berada di LXC/VM terpisah pada jaringan Proxmox, Docker daemon di gateway tidak memiliki visibilitas ke container di LXC lain. **Dynamic File Provider adalah mekanisme wajib** untuk menghubungkan Traefik ke layanan backend di seluruh homelab.
 
 ### 5.1 Standar Penamaan Unik (Global Unique Rule)
+
 Di Traefik, semua nama router, service, dan middleware harus **unik secara global**.
+
 - Rekomendasi Router: `<nama_layanan>-router` (misal: `uptime-kuma-router`)
 - Rekomendasi Service: `<nama_layanan>-service` (misal: `uptime-kuma-service`)
 - Rekomendasi Middleware: `<nama_layanan>-<fungsi>-mw` (misal: `api-strip-mw`)
 
 ### 5.2 Template 1: Layanan Web HTTP Standar (`/opt/ingress/dynamic/app-template.yml`)
+
 Gunakan template ini untuk aplikasi web biasa (Next.js, Portainer, Uptime Kuma, dsb.):
+
 ```yaml
 http:
-  routers:
-    app-template-router:
-      rule: "Host(`app.domainmamay.com`)"
-      entryPoints:
-        - web
-      service: app-template-service
+    routers:
+        app-template-router:
+            rule: 'Host(`app.domainmamay.com`)'
+            entryPoints:
+                - web
+            service: app-template-service
 
-  services:
-    app-template-service:
-      loadBalancer:
-        servers:
-          - url: "http://192.168.0.101:3000"
-        passHostHeader: true
+    services:
+        app-template-service:
+            loadBalancer:
+                servers:
+                    - url: 'http://192.168.0.101:3000'
+                passHostHeader: true
 ```
 
 ### 5.3 Template 2: Layanan API dengan Header Keamanan (`/opt/ingress/dynamic/api-template.yml`)
+
 Gunakan template ini untuk REST API, webhook, atau layanan backend yang memerlukan sanitasi header:
+
 ```yaml
 http:
-  routers:
-    api-template-router:
-      rule: "Host(`api.domainmamay.com`)"
-      entryPoints:
-        - web
-      middlewares:
-        - common-security-headers
-      service: api-template-service
+    routers:
+        api-template-router:
+            rule: 'Host(`api.domainmamay.com`)'
+            entryPoints:
+                - web
+            middlewares:
+                - common-security-headers
+            service: api-template-service
 
-  middlewares:
-    common-security-headers:
-      headers:
-        sslRedirect: false # Terminasi SSL ditangani Cloudflare Edge
-        browserXssFilter: true
-        contentTypeNosniff: true
-        frameDeny: true
-        customRequestHeaders:
-          X-Forwarded-Proto: "https"
+    middlewares:
+        common-security-headers:
+            headers:
+                sslRedirect: false # Terminasi SSL ditangani Cloudflare Edge
+                browserXssFilter: true
+                contentTypeNosniff: true
+                frameDeny: true
+                customRequestHeaders:
+                    X-Forwarded-Proto: 'https'
 
-  services:
-    api-template-service:
-      loadBalancer:
-        servers:
-          - url: "http://192.168.0.102:8080"
-        passHostHeader: true
+    services:
+        api-template-service:
+            loadBalancer:
+                servers:
+                    - url: 'http://192.168.0.102:8080'
+                passHostHeader: true
 ```
 
 ### 5.4 Template 3: Layanan dengan Path-Prefix / Strip-Prefix
+
 Jika backend berjalan pada subpath tetapi diakses tanpa subpath:
+
 ```yaml
 http:
-  routers:
-    prefixed-app-router:
-      rule: "Host(`console.domainmamay.com`) && PathPrefix(`/admin`)"
-      entryPoints:
-        - web
-      middlewares:
-        - strip-admin-prefix
-      service: prefixed-app-service
+    routers:
+        prefixed-app-router:
+            rule: 'Host(`console.domainmamay.com`) && PathPrefix(`/admin`)'
+            entryPoints:
+                - web
+            middlewares:
+                - strip-admin-prefix
+            service: prefixed-app-service
 
-  middlewares:
-    strip-admin-prefix:
-      stripPrefix:
-        prefixes:
-          - "/admin"
+    middlewares:
+        strip-admin-prefix:
+            stripPrefix:
+                prefixes:
+                    - '/admin'
 
-  services:
-    prefixed-app-service:
-      loadBalancer:
-        servers:
-          - url: "http://192.168.0.103:9000"
+    services:
+        prefixed-app-service:
+            loadBalancer:
+                servers:
+                    - url: 'http://192.168.0.103:9000'
 ```
 
 ---
@@ -331,6 +348,7 @@ http:
 Seluruh konfigurasi domain dipetakan melalui Cloudflare One Dashboard, bukan melalui file lokal `config.yml`.
 
 ### 6.1 Membuat Tunnel Baru
+
 1. Buka [Cloudflare Zero Trust Dashboard](https://one.dash.cloudflare.com/) -> **Networks** -> **Tunnels**.
 2. Klik **Add a tunnel** -> Pilih tipe connector: **Cloudflared**.
 3. Masukkan nama tunnel: `mamay-ingress-tunnel`.
@@ -339,12 +357,14 @@ Seluruh konfigurasi domain dipetakan melalui Cloudflare One Dashboard, bukan mel
 6. Masukkan token tersebut ke dalam `/opt/ingress/.env`.
 
 ### 6.2 Memetakan Public Hostname (Aturan Baku)
+
 Setiap layanan baru di homelab **wajib** dipetakan dengan aturan baku:
+
 - **Subdomain:** nama subdomain (misal `git`, `grafana`, `home`)
 - **Domain:** domain terdaftar Anda di Cloudflare (misal `domainmamay.com`)
 - **Path:** biarkan kosong (kecuali spesifik)
 - **Type:** `HTTP`
-- **URL:** `traefik:80` *(PENTING: Jangan masukkan IP LAN di sini. Gunakan selalu `traefik:80`)*
+- **URL:** `traefik:80` _(PENTING: Jangan masukkan IP LAN di sini. Gunakan selalu `traefik:80`)_
 
 > [!NOTE]
 > Nama host `traefik` dapat dikenali oleh `cloudflared` karena keduanya berada di dalam Docker bridge network yang sama (`web-gateway`). Traefik yang bertugas mencocokkan header `Host` dan meneruskannya ke IP LAN backend yang sebenarnya.
@@ -359,12 +379,12 @@ Setiap layanan baru di homelab **wajib** dipetakan dengan aturan baku:
    Docker Provider dan mount `/var/run/docker.sock` tidak dipakai pada target gateway yang hanya memakai File Provider. Suffix mount `:ro` hanya membatasi filesystem; itu tidak membatasi hak API Docker dan bukan mekanisme read-only untuk daemon. Akses Docker API dapat memberi kontrol tingkat root pada LXC. Jangan tambahkan socket/provider tanpa desain otorisasi terpisah dan review keamanan.
 3. **Traefik Dashboard Insecure Mode (`:8080`):**
    Flag `--api.insecure=true` mengaktifkan web GUI tanpa autentikasi pada port `8080`.
-   - **Aturan Akses:** Hanya boleh diakses via LAN internal (`192.168.0.0/24`) atau koneksi privat (Tailscale/WireGuard).
-   - **Larangan Keras:** DILARANG membuat Public Hostname di Cloudflare Zero Trust yang mengarah ke port `8080`.
+    - **Aturan Akses:** Hanya boleh diakses via LAN internal (`192.168.0.0/24`) atau koneksi privat (Tailscale/WireGuard).
+    - **Larangan Keras:** DILARANG membuat Public Hostname di Cloudflare Zero Trust yang mengarah ke port `8080`.
 4. **Mekanisme Inotify di Linux LXC:**
-   Opsi `--providers.file.watch=true` menggunakan Linux *inotify kernel events*.
-   - Selalu buat, ubah, atau hapus file YAML langsung di dalam shell LXC 10080 (`/opt/ingress/dynamic/`).
-   - Jika file disunting dari host Proxmox langsung ke bind-mount, trigger inotify mungkin tidak terkirim ke container Traefik.
+   Opsi `--providers.file.watch=true` menggunakan Linux _inotify kernel events_.
+    - Selalu buat, ubah, atau hapus file YAML langsung di dalam shell LXC 10080 (`/opt/ingress/dynamic/`).
+    - Jika file disunting dari host Proxmox langsung ke bind-mount, trigger inotify mungkin tidak terkirim ke container Traefik.
 5. **Forwarded Headers dan IP Asli:**
    Cloudflare Edge menyertakan IP asli klien pada header `CF-Connecting-IP`. Cloudflared meneruskan request ke Traefik; entrypoint Traefik harus mempercayai hanya subnet Docker `web-gateway` yang dipakai cloudflared melalui `forwardedHeaders.trustedIPs`, seperti pada Compose Bagian 4.3. Jangan gunakan `forwardedHeaders.insecure=true` atau mempercayai seluruh LAN. Pastikan hanya Traefik dan cloudflared yang menjadi anggota subnet tepercaya. Traefik lalu meneruskan `X-Forwarded-For` dan `X-Forwarded-Proto` ke aplikasi; Laravel hanya mempercayai proxy LXC gateway `192.168.0.80`.
 6. **Akses bidang administrasi Proxmox:**
@@ -446,51 +466,55 @@ docker compose ps
 Setiap kali tim DevOps ingin menghubungkan aplikasi baru ke internet via domain publik:
 
 ### Tahap 1: Persiapan & Validasi Backend
+
 1. Pastikan aplikasi target berjalan di LXC/VM dengan IP statis pada subnet `192.168.0.0/24` (contoh: LXC 101 pada `192.168.0.101:3000`).
 2. Pastikan service backend mendengarkan pada interface yang dapat diakses LAN (`0.0.0.0` atau `192.168.0.101`), bukan `127.0.0.1`.
 3. Dari terminal LXC 10080, lakukan uji jangkauan jaringan:
-   ```bash
-   curl -I http://192.168.0.101:3000
-   ```
-   *(Harus mengembalikan respons HTTP status code seperti 200, 301, 302, 401, atau 404. Jika timeout, periksa firewall UFW atau PVE firewall).*
+    ```bash
+    curl -I http://192.168.0.101:3000
+    ```
+    _(Harus mengembalikan respons HTTP status code seperti 200, 301, 302, 401, atau 404. Jika timeout, periksa firewall UFW atau PVE firewall)._
 
 ### Tahap 2: Buat File Routing di Traefik Dynamic Provider
-1. Di dalam LXC 10080, buat file baru:
-   ```bash
-   nano /opt/ingress/dynamic/my-app.yml
-   ```
-2. Isi file menggunakan format baku:
-   ```yaml
-   http:
-     routers:
-       my-app-router:
-         rule: "Host(`app.domainmamay.com`)"
-         entryPoints:
-           - web
-         service: my-app-service
 
-     services:
-       my-app-service:
-         loadBalancer:
-           servers:
-             - url: "http://192.168.0.101:3000"
-   ```
+1. Di dalam LXC 10080, buat file baru:
+    ```bash
+    nano /opt/ingress/dynamic/my-app.yml
+    ```
+2. Isi file menggunakan format baku:
+    ```yaml
+    http:
+        routers:
+            my-app-router:
+                rule: 'Host(`app.domainmamay.com`)'
+                entryPoints:
+                    - web
+                service: my-app-service
+
+        services:
+            my-app-service:
+                loadBalancer:
+                    servers:
+                        - url: 'http://192.168.0.101:3000'
+    ```
 3. Simpan file. Traefik otomatis membaca perubahan tanpa restart container.
 4. Buka Traefik Dashboard di browser LAN: `http://192.168.0.80:8080/dashboard/`.
-   - Buka menu **HTTP Routers** -> Pastikan `my-app-router` muncul dan berstatus **OK (Hijau)**.
-   - Buka menu **HTTP Services** -> Pastikan `my-app-service` terdaftar mengarah ke IP `192.168.0.101:3000`.
+    - Buka menu **HTTP Routers** -> Pastikan `my-app-router` muncul dan berstatus **OK (Hijau)**.
+    - Buka menu **HTTP Services** -> Pastikan `my-app-service` terdaftar mengarah ke IP `192.168.0.101:3000`.
 
 ### Tahap 3: Daftarkan Public Hostname di Cloudflare Zero Trust
+
 1. Buka [Cloudflare Zero Trust](https://one.dash.cloudflare.com/) -> **Networks** -> **Tunnels** -> Pilih `mamay-ingress-tunnel`.
 2. Klik tab **Public Hostname** -> **Add a public hostname**.
 3. Konfigurasi:
-   - **Subdomain:** `app`
-   - **Domain:** `domainmamay.com`
-   - **Type:** `HTTP`
-   - **URL:** `traefik:80`
+    - **Subdomain:** `app`
+    - **Domain:** `domainmamay.com`
+    - **Type:** `HTTP`
+    - **URL:** `traefik:80`
 4. Klik **Save hostname**.
 
 ### Tahap 4: Uji Coba End-to-End & Update Inventaris
+
 1. Akses dari browser publik: `https://app.domainmamay.com`.
 2. Catat layanan yang telah aktif ke dalam tabel **Inventaris Layanan** (Bagian 11).
 
@@ -502,6 +526,7 @@ Sistem homelab ini menerapkan arsitektur **Zero-Registry In-LXC CI/CD**. Berbeda
 
 > [!NOTE]
 > **Keunggulan Pendekatan In-LXC Homelab:**
+>
 > - **Efisiensi Bandwidth Homelab:** Tidak ada proses upload image raksasa ke internet publik lalu men-download-nya kembali ke server lokal.
 > - **Kecepatan Build (Local Layer Caching):** Engine Docker BuildKit memanfaatkan layer cache lokal di SSD Proxmox, membuat proses build jauh lebih cepat.
 > - **Lokasi Rahasia Produksi:** File `.env` berada di LXC target, bukan di runner cloud. Namun workflow runner pada LXC yang sama memiliki akses daemon Docker dan dapat membaca `.env`; perlakukan runner serta perubahan workflow sebagai akses administratif produksi. Jangan cetak rahasia ke log atau artifact GitHub.
@@ -561,20 +586,25 @@ Sistem homelab ini menerapkan arsitektur **Zero-Registry In-LXC CI/CD**. Berbeda
 Agar LXC target dapat menjalankan Docker Engine dan bertindak sebagai runner lokal, container harus memenuhi spesifikasi Proxmox berikut:
 
 #### 1. Fitur Kernel LXC (`/etc/pve/lxc/<ID>.conf`)
+
 Periksa konfigurasi container di host Proxmox (contoh `/etc/pve/lxc/100.conf`):
+
 ```text
 features: nesting=1,keyctl=1
 ```
+
 > [!IMPORTANT]
+>
 > - `nesting=1`: Wajib agar Docker dapat membuat cgroup & namespace jaringan di dalam LXC unprivileged.
 > - `keyctl=1`: Menghindari permission error pada storage driver Docker `overlay2`.
 > - Jika fitur ini belum aktif, jalankan di shell Proxmox Host:
->   ```bash
->   pct set <ID> -features nesting=1,keyctl=1
->   pct reboot <ID>
->   ```
+>     ```bash
+>     pct set <ID> -features nesting=1,keyctl=1
+>     pct reboot <ID>
+>     ```
 
 #### 2. Rekomendasi Alokasi Resource LXC Aplikasi
+
 - **Disk Space:** Minimal 20 GB – 32 GB (proses build Docker lokal dan layer caching membutuhkan cadangan ruang disk).
 - **RAM & CPU:** Minimal 2 vCPU dan 2048 MB RAM (sesuaikan dengan beban kompilasi bahasa/framework seperti Next.js, Node.js, atau Go).
 
@@ -656,6 +686,7 @@ Untuk menjaga konsistensi dengan Ingress Gateway di `/opt/ingress`, seluruh apli
 > **Batas contoh generik:** Contoh `.env` di Bagian 10.4 memakai `web1`, Node.js, port `3000`, dan database contoh di `192.168.0.200`; workflow di Bagian 10.5 juga memakai nama direktori dan port contoh. Nilai tersebut bukan ketentuan untuk semua aplikasi. Ikuti ADR aplikasi untuk runtime, port, dan lokasi database. Untuk KostKita, [ADR-004](../decisions/ADR-004-proxmox-docker-deployment.md) menetapkan PostgreSQL dalam Docker Compose di LXC aplikasi KostKita; jangan memakai host contoh VM 200 atau memublikasikan port PostgreSQL.
 
 #### Layout Direktori `/opt/<nama-aplikasi>/`:
+
 ```text
 /opt/web1/
 ├── .env                  # Rahasia produksi (chmod 600, TIDAK di-commit ke Git)
@@ -665,115 +696,116 @@ Untuk menjaga konsistensi dengan Ingress Gateway di `/opt/ingress`, seluruh apli
 ```
 
 #### Tata Kelola File `.env` Produksi:
-1. Siapkan file `.env` langsung di dalam server LXC satu kali saat inisialisasi:
-   ```bash
-   cat << 'EOF' > /opt/web1/.env
-   NODE_ENV=production
-   PORT=3000
-   DATABASE_URL=postgresql://user:secret@192.168.0.200:5432/web1_db
-   SECRET_KEY=kunci_rahasia_homelab_yang_sangat_panjang
-   EOF
 
-   # Kunci hak akses agar hanya user root dan runner yang dapat membaca
-   chmod 600 /opt/web1/.env
-   chown runner:runner /opt/web1/.env
-   ```
+1. Siapkan file `.env` langsung di dalam server LXC satu kali saat inisialisasi:
+    ```bash
+    cat << 'EOF' > /opt/web1/.env
+    NODE_ENV=production
+    PORT=3000
+    DATABASE_URL=postgresql://user:secret@192.168.0.200:5432/web1_db
+    SECRET_KEY=kunci_rahasia_homelab_yang_sangat_panjang
+    EOF
+
+    # Kunci hak akses agar hanya user root dan runner yang dapat membaca
+    chmod 600 /opt/web1/.env
+    chown runner:runner /opt/web1/.env
+    ```
 2. Workflow CI/CD **dilarang menimpa atau menghapus** file `.env` ini. Source code yang di-checkout dari GitHub akan disinkronkan ke `/opt/<nama-aplikasi>/` dengan proteksi `--exclude='.env'`.
 3. Karena direktori produksi juga menjadi Docker build context, letakkan `.dockerignore` di root context dan kecualikan file rahasia sebelum `docker compose build` ([Docker build context](https://docs.docker.com/build/concepts/context/)):
-   ```text
-   .env
-   .env.*
-   **/.env
-   **/.env.*
-   !.env.example
-   ```
-   Workflow deployment tetap dapat memakai `.env` untuk konfigurasi runtime Compose; file tersebut tidak boleh dikirim sebagai build context atau disalin ke image.
+    ```text
+    .env
+    .env.*
+    **/.env
+    **/.env.*
+    !.env.example
+    ```
+    Workflow deployment tetap dapat memakai `.env` untuk konfigurasi runtime Compose; file tersebut tidak boleh dikirim sebagai build context atau disalin ke image.
 
 ---
 
 ### 10.5 Template Produksi Workflow GitHub Actions (`.github/workflows/deploy.yml`)
 
-Simpan template workflow ini di dalam repositori kode aplikasi pada `.github/workflows/deploy.yml`. 
+Simpan template workflow ini di dalam repositori kode aplikasi pada `.github/workflows/deploy.yml`.
 Workflow ini berjalan **100% lokal di dalam LXC**, tanpa menggunakan kuota menit build GitHub Cloud dan tanpa registri container:
 
 ```yaml
 name: Local In-LXC CI/CD Deployment
 
 on:
-  push:
-    branches:
-      - main
-      - master
-  workflow_dispatch: # Memungkinkan trigger manual via UI GitHub Actions
+    push:
+        branches:
+            - main
+            - master
+    workflow_dispatch: # Memungkinkan trigger manual via UI GitHub Actions
 
 concurrency:
-  group: production-deploy-${{ github.ref }}
-  cancel-in-progress: false # Cegah deploy bersamaan saling bertabrakan
+    group: production-deploy-${{ github.ref }}
+    cancel-in-progress: false # Cegah deploy bersamaan saling bertabrakan
 
 jobs:
-  deploy:
-    name: Build & In-Place Deploy on Target LXC
-    # Wajib mencocokkan custom label runner pada LXC target (contoh: web1)
-    runs-on: [self-hosted, linux, x64, web1]
+    deploy:
+        name: Build & In-Place Deploy on Target LXC
+        # Wajib mencocokkan custom label runner pada LXC target (contoh: web1)
+        runs-on: [self-hosted, linux, x64, web1]
 
-    env:
-      APP_DIR: /opt/web1
-      APP_PORT: 3000
+        env:
+            APP_DIR: /opt/web1
+            APP_PORT: 3000
 
-    steps:
-      - name: Checkout Source Code
-        uses: actions/checkout@v4
+        steps:
+            - name: Checkout Source Code
+              uses: actions/checkout@v4
 
-      - name: Sync Source Code to Production Directory
-        run: |
-          echo ">>> Mensinkronkan file repository ke direktori produksi $APP_DIR..."
-          # rsync file repo ke /opt/web1 dengan mengecualikan .env agar konfigurasi lokal aman
-          rsync -av --delete \
-            --exclude='.env' \
-            --exclude='.env.*' \
-            --exclude='.git' \
-            --exclude='.github' \
-            ./ "$APP_DIR/"
+            - name: Sync Source Code to Production Directory
+              run: |
+                  echo ">>> Mensinkronkan file repository ke direktori produksi $APP_DIR..."
+                  # rsync file repo ke /opt/web1 dengan mengecualikan .env agar konfigurasi lokal aman
+                  rsync -av --delete \
+                    --exclude='.env' \
+                    --exclude='.env.*' \
+                    --exclude='.git' \
+                    --exclude='.github' \
+                    ./ "$APP_DIR/"
 
-      - name: Build & Launch Docker Container In-Place
-        working-directory: /opt/web1
-        run: |
-          echo ">>> Menjalankan build Docker image lokal (tanpa GHCR)..."
-          # Build ulang image secara lokal lalu reload kontainer tanpa downtime lama
-          docker compose build --pull
-          docker compose up -d --remove-orphans
+            - name: Build & Launch Docker Container In-Place
+              working-directory: /opt/web1
+              run: |
+                  echo ">>> Menjalankan build Docker image lokal (tanpa GHCR)..."
+                  # Build ulang image secara lokal lalu reload kontainer tanpa downtime lama
+                  docker compose build --pull
+                  docker compose up -d --remove-orphans
 
-      - name: Application Health Check
-        run: |
-          echo ">>> Menunggu service stabil dan melakukan health check..."
-          sleep 5
-          # Verifikasi apakah aplikasi merespons HTTP request di port internal
-          curl -fsS --retry 5 --retry-delay 3 http://127.0.0.1:$APP_PORT/ || {
-            echo "❌ Health check gagal! Service tidak merespons di port $APP_PORT."
-            docker compose -f "$APP_DIR/docker-compose.yml" logs --tail=50
-            exit 1
-          }
-          echo "✅ Health check berhasil! Aplikasi berjalan normal di port $APP_PORT."
+            - name: Application Health Check
+              run: |
+                  echo ">>> Menunggu service stabil dan melakukan health check..."
+                  sleep 5
+                  # Verifikasi apakah aplikasi merespons HTTP request di port internal
+                  curl -fsS --retry 5 --retry-delay 3 http://127.0.0.1:$APP_PORT/ || {
+                    echo "❌ Health check gagal! Service tidak merespons di port $APP_PORT."
+                    docker compose -f "$APP_DIR/docker-compose.yml" logs --tail=50
+                    exit 1
+                  }
+                  echo "✅ Health check berhasil! Aplikasi berjalan normal di port $APP_PORT."
 
-      - name: Post-Deployment Storage Hygiene
-        if: always()
-        run: |
-          echo ">>> Membersihkan sisa build cache dan dangling images..."
-          # Menghapus image sisa (<none>:<none>) untuk menjaga kapasitas disk LXC
-          docker image prune -f
+            - name: Post-Deployment Storage Hygiene
+              if: always()
+              run: |
+                  echo ">>> Membersihkan sisa build cache dan dangling images..."
+                  # Menghapus image sisa (<none>:<none>) untuk menjaga kapasitas disk LXC
+                  docker image prune -f
 ```
 
 ---
 
 ### 10.6 Runbook Storage Hygiene & Mitigasi Kendala CI/CD In-LXC
 
-| Kendala / Error | Gejala & Indikasi | Solusi & Tindakan Perbaikan |
-|---|---|---|
-| **No Space Left on Device** | Build Docker gagal dengan pesan `no space left on device` saat kompilasi layer. | 1. Di dalam LXC, periksa sisa disk: `df -h`.<br>2. Hapus build cache lama: `docker builder prune -a -f --filter "until=48h"`.<br>3. Bersihkan container stop: `docker container prune -f`.<br>4. Tambah kapasitas disk via Proxmox Host: `pct resize <ID> rootfs +10G`. |
-| **Permission Denied Docker Socket** | Runner gagal menjalankan docker: `Got permission denied while trying to connect to Docker daemon socket`. | User `runner` belum terdaftar di grup `docker`. Jalankan di shell LXC: `usermod -aG docker runner`, lalu restart service runner: `systemctl restart actions.runner.*`. |
-| **Runner Offline di GitHub** | Job GitHub Actions pending dengan status `Waiting for a runner to pick up this job`. | 1. Masuk ke shell LXC target.<br>2. Cek status daemon: `cd /home/runner/actions-runner && ./svc.sh status`.<br>3. Jika stop/mati: jalankan `./svc.sh start` atau periksa koneksi internet LXC (`curl -I https://github.com`). |
-| **Health Check Timeout (Port Gagal)** | Workflow gagal di step `Application Health Check`. | 1. Periksa log container aplikasi: `docker compose -f /opt/<nama-app>/docker-compose.yml logs --tail=100`.<br>2. Pastikan service di dalam container mendengarkan pada `0.0.0.0`, bukan hanya `127.0.0.1` di dalam container.<br>3. Pastikan port binding di `docker-compose.yml` sudah benar (contoh `ports: - "3000:3000"`). |
-| **File `.env` Terhapus / Timpa** | Variabel rahasia hilang setelah push git baru. | Pastikan perintah `rsync` selalu menyertakan opsi `--exclude='.env'`. Lakukan backup berkala file `/opt/<app>/.env`. |
+| Kendala / Error                       | Gejala & Indikasi                                                                                         | Solusi & Tindakan Perbaikan                                                                                                                                                                                                                                                                                                    |
+| ------------------------------------- | --------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **No Space Left on Device**           | Build Docker gagal dengan pesan `no space left on device` saat kompilasi layer.                           | 1. Di dalam LXC, periksa sisa disk: `df -h`.<br>2. Hapus build cache lama: `docker builder prune -a -f --filter "until=48h"`.<br>3. Bersihkan container stop: `docker container prune -f`.<br>4. Tambah kapasitas disk via Proxmox Host: `pct resize <ID> rootfs +10G`.                                                        |
+| **Permission Denied Docker Socket**   | Runner gagal menjalankan docker: `Got permission denied while trying to connect to Docker daemon socket`. | User `runner` belum terdaftar di grup `docker`. Jalankan di shell LXC: `usermod -aG docker runner`, lalu restart service runner: `systemctl restart actions.runner.*`.                                                                                                                                                         |
+| **Runner Offline di GitHub**          | Job GitHub Actions pending dengan status `Waiting for a runner to pick up this job`.                      | 1. Masuk ke shell LXC target.<br>2. Cek status daemon: `cd /home/runner/actions-runner && ./svc.sh status`.<br>3. Jika stop/mati: jalankan `./svc.sh start` atau periksa koneksi internet LXC (`curl -I https://github.com`).                                                                                                  |
+| **Health Check Timeout (Port Gagal)** | Workflow gagal di step `Application Health Check`.                                                        | 1. Periksa log container aplikasi: `docker compose -f /opt/<nama-app>/docker-compose.yml logs --tail=100`.<br>2. Pastikan service di dalam container mendengarkan pada `0.0.0.0`, bukan hanya `127.0.0.1` di dalam container.<br>3. Pastikan port binding di `docker-compose.yml` sudah benar (contoh `ports: - "3000:3000"`). |
+| **File `.env` Terhapus / Timpa**      | Variabel rahasia hilang setelah push git baru.                                                            | Pastikan perintah `rsync` selalu menyertakan opsi `--exclude='.env'`. Lakukan backup berkala file `/opt/<app>/.env`.                                                                                                                                                                                                           |
 
 ---
 
@@ -781,20 +813,22 @@ jobs:
 
 Tabel ini wajib diperbarui setiap kali rute baru diaktifkan di Ingress Gateway:
 
-| Hostname Publik | Target Service (LXC/VM & IP) | Port Internal | Protokol | File Dynamic Config | Status | Keterangan |
-|---|---|---|---|---|---|---|
-| *(Contoh) app.domainmamay.com* | *LXC 101 - 192.168.0.101* | *3000* | *HTTP* | `/opt/ingress/dynamic/app.yml` | *Rencana / Template* | Aplikasi Frontend Web |
-| *(Contoh) api.domainmamay.com* | *LXC 102 - 192.168.0.102* | *8080* | *HTTP* | `/opt/ingress/dynamic/api.yml` | *Rencana / Template* | Backend REST API |
-| *(Contoh) auth.domainmamay.com* | *LXC 103 - 192.168.0.103* | *9000* | *HTTP* | `/opt/ingress/dynamic/auth.yml` | *Rencana / Template* | Layanan Autentikasi |
-| `kostkita.sequein.my.id` | LXC `10026` — `192.168.0.26` | Belum ditetapkan | HTTP | `/opt/ingress/dynamic/kostkita.yml` (belum dibuat) | **Rencana — LXC dinyatakan sudah dibuat; audit, Docker/runner, dan routing belum dilakukan** | KostKita; target publik `https://kostkita.sequein.my.id`; firewall LXC dinyatakan nonaktif, tidak boleh diubah tanpa persetujuan. Lihat [ADR-004](../decisions/ADR-004-proxmox-docker-deployment.md) dan [panduan deployment](DEPLOYMENT-GUIDE.md). |
-| *(Tidak ada Public Hostname)* | *Host PVE — IP administrasi dicatat di LAN/VPN; `192.168.0.80` adalah LXC ingress, bukan Host PVE* | *8006* | *HTTPS* | — | *LAN/VPN saja; tidak dirutekan melalui Cloudflare Tunnel publik* | Proxmox VE Web UI / bidang administrasi |
+| Hostname Publik                 | Target Service (LXC/VM & IP)                                                                       | Port Internal | Protokol | File Dynamic Config                                | Status                                                                            | Keterangan                                                                                                                                                                                                                                          |
+| ------------------------------- | -------------------------------------------------------------------------------------------------- | ------------- | -------- | -------------------------------------------------- | --------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| _(Contoh) app.domainmamay.com_  | _LXC 101 - 192.168.0.101_                                                                          | _3000_        | _HTTP_   | `/opt/ingress/dynamic/app.yml`                     | _Rencana / Template_                                                              | Aplikasi Frontend Web                                                                                                                                                                                                                               |
+| _(Contoh) api.domainmamay.com_  | _LXC 102 - 192.168.0.102_                                                                          | _8080_        | _HTTP_   | `/opt/ingress/dynamic/api.yml`                     | _Rencana / Template_                                                              | Backend REST API                                                                                                                                                                                                                                    |
+| _(Contoh) auth.domainmamay.com_ | _LXC 103 - 192.168.0.103_                                                                          | _9000_        | _HTTP_   | `/opt/ingress/dynamic/auth.yml`                    | _Rencana / Template_                                                              | Layanan Autentikasi                                                                                                                                                                                                                                 |
+| `kostkita.sequein.my.id`        | LXC `10026` — `192.168.0.26`                                                                       | `8080`        | HTTP     | `/opt/ingress/dynamic/kostkita.yml` (belum dibuat) | **Rencana — LXC dinyatakan sudah dibuat; routing dan go-live belum diverifikasi** | KostKita; target publik `https://kostkita.sequein.my.id`; firewall LXC dinyatakan nonaktif, tidak boleh diubah tanpa persetujuan. Lihat [ADR-004](../decisions/ADR-004-proxmox-docker-deployment.md) dan [panduan deployment](DEPLOYMENT-GUIDE.md). |
+| _(Tidak ada Public Hostname)_   | _Host PVE — IP administrasi dicatat di LAN/VPN; `192.168.0.80` adalah LXC ingress, bukan Host PVE_ | _8006_        | _HTTPS_  | —                                                  | _LAN/VPN saja; tidak dirutekan melalui Cloudflare Tunnel publik_                  | Proxmox VE Web UI / bidang administrasi                                                                                                                                                                                                             |
 
 ---
 
 ## 12. Prosedur Pemeliharaan, Backup, & Pemulihan (Disaster Recovery)
 
 ### 12.1 Prosedur Backup Rutin
+
 Direktori `/opt/ingress` adalah satu-satunya state penting di LXC 10080. Lakukan backup berkala ke penyimpanan sekunder:
+
 ```bash
 # Membuat arsip backup tarball
 tar -czvf /root/ingress-backup-$(date +%F).tar.gz -C /opt ingress
@@ -803,6 +837,7 @@ tar -czvf /root/ingress-backup-$(date +%F).tar.gz -C /opt ingress
 ```
 
 ### 12.2 Prosedur Pembaruan Container Stack
+
 ```bash
 cd /opt/ingress
 docker compose pull
@@ -810,7 +845,9 @@ docker compose up -d --remove-orphans
 ```
 
 ### 12.3 Prosedur Pemulihan Total (Full Recovery)
+
 Jika LXC 10080 rusak total dan harus dibuat ulang:
+
 1. Buat LXC 10080 baru di Proxmox sesuai spesifikasi Bagian 3.
 2. Pasang Docker Engine sesuai Bagian 8 (Langkah 1).
 3. Buat network `docker network create web-gateway`.
@@ -824,6 +861,7 @@ Jika LXC 10080 rusak total dan harus dibuat ulang:
 Jika terjadi gangguan akses (502 Bad Gateway, 1033 Tunnel Down, atau 404 Not Found), lakukan investigasi bertahap berikut:
 
 ### 13.1 Diagram Alur Diagnostik
+
 ```text
 [ Insiden Akses Dilaporkan ]
              │
@@ -843,6 +881,7 @@ Jika terjadi gangguan akses (502 Bad Gateway, 1033 Tunnel Down, atau 404 Not Fou
 ### 13.2 Perintah Uji Diagnostik (Best Practice)
 
 #### 1. Uji Status Container Stack
+
 ```bash
 cd /opt/ingress
 docker compose ps
@@ -851,19 +890,25 @@ docker compose logs --tail=50 traefik
 ```
 
 #### 2. Uji Konektivitas Docker Network Internal (`web-gateway`)
+
 Karena image `cloudflared` berbasis distroless dan tidak memiliki binary `ping` atau shell interaktif lengkap, gunakan container curl diagnostik ephemeral:
+
 ```bash
 docker run --rm --network web-gateway curlimages/curl:latest -sI http://traefik:80/
 ```
-*Hasil Normal:* Mengembalikan header HTTP (misal: `HTTP/1.1 404 Not Found` langsung dari Traefik). Ini membuktikan koneksi TCP port 80 Traefik berfungsi di dalam network bridge.
+
+_Hasil Normal:_ Mengembalikan header HTTP (misal: `HTTP/1.1 404 Not Found` langsung dari Traefik). Ini membuktikan koneksi TCP port 80 Traefik berfungsi di dalam network bridge.
 
 #### 3. Uji Jangkauan ke IP Backend Homelab
+
 Jalankan langsung dari shell LXC 10080:
+
 ```bash
 curl -I http://192.168.0.X:PORT
 ```
 
 #### 4. Validasi Format Sintaks YAML Dynamic Provider
+
 ```bash
 # Memeriksa apakah ada karakter TAB atau kesalahan parsing pada file konfigurasi
 docker compose logs traefik | grep -i "error"
@@ -871,15 +916,15 @@ docker compose logs traefik | grep -i "error"
 
 ### 13.3 Matriks Solusi Kendala (Troubleshooting Matrix)
 
-| Gejala Masalah | Indikasi / Pesan Error | Akar Masalah | Solusi Cepat |
-|---|---|---|---|
-| **Cloudflare Error 1033** | *Cloudflare Tunnel error 1033: Argo Tunnel error* | Container `cloudflared` tidak berjalan, atau `TUNNEL_TOKEN` salah/kadaluarsa. | Jalankan `docker compose up -d cloudflared`. Periksa log dengan `docker compose logs cloudflared`. Verifikasi token di `.env`. |
-| **Cloudflare Error 502** | *Bad Gateway (Cloudflare Edge)* | `cloudflared` tidak dapat menjangkau `traefik:80`. | 1. Pastikan container `traefik` running.<br>2. Pastikan kedua container tergabung dalam network `web-gateway`.<br>3. Uji dengan container curl ephemeral (Bagian 13.2 poin 2). |
-| **Traefik 404 Not Found** | *404 page not found (Plain text)* | Host header tidak cocok dengan rule di dynamic config, atau file YAML belum terbaca. | 1. Cek Traefik Dashboard `:8080/dashboard/` menu HTTP Routers.<br>2. Pastikan `Host(...)` sama persis dengan domain yang diakses.<br>3. Pastikan ekstensi file adalah `.yml` atau `.yaml`. |
-| **Traefik 502 Bad Gateway**| *Bad Gateway (Traefik)* | Traefik tidak dapat menjangkau IP atau Port backend LXC target. | 1. Uji `curl -I http://192.168.0.X:PORT` dari LXC 10080.<br>2. Pastikan service di LXC target listen di `0.0.0.0`, bukan `127.0.0.1`.<br>3. Periksa firewall LXC backend (`ufw status` atau PVE firewall). |
-| **Traefik 504 Gateway Timeout**| *Gateway Timeout* | Backend menerima koneksi tetapi tidak merespons dalam batas waktu timeout. | Periksa beban CPU/RAM pada LXC backend target, koneksi database backend, atau timeout limit aplikasi. |
-| **Docker Compose Error** | *network web-gateway declared as external, but could not be found* | Network eksternal belum dibuat sebelum menjalankan stack. | Jalankan perintah: `docker network create web-gateway`, lalu ulangi `docker compose up -d`. |
-| **Dynamic Config Tidak Berubah** | Perubahan di YAML tidak muncul di dashboard | Inotify kernel event tidak terpicu, atau sintaks YAML rusak. | 1. Edit file langsung di dalam shell LXC 10080.<br>2. Cek `docker compose logs traefik` untuk melihat error parsing YAML.<br>3. Pastikan tidak ada tab (`\t`) dan nama router unik. |
+| Gejala Masalah                   | Indikasi / Pesan Error                                             | Akar Masalah                                                                         | Solusi Cepat                                                                                                                                                                                               |
+| -------------------------------- | ------------------------------------------------------------------ | ------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Cloudflare Error 1033**        | _Cloudflare Tunnel error 1033: Argo Tunnel error_                  | Container `cloudflared` tidak berjalan, atau `TUNNEL_TOKEN` salah/kadaluarsa.        | Jalankan `docker compose up -d cloudflared`. Periksa log dengan `docker compose logs cloudflared`. Verifikasi token di `.env`.                                                                             |
+| **Cloudflare Error 502**         | _Bad Gateway (Cloudflare Edge)_                                    | `cloudflared` tidak dapat menjangkau `traefik:80`.                                   | 1. Pastikan container `traefik` running.<br>2. Pastikan kedua container tergabung dalam network `web-gateway`.<br>3. Uji dengan container curl ephemeral (Bagian 13.2 poin 2).                             |
+| **Traefik 404 Not Found**        | _404 page not found (Plain text)_                                  | Host header tidak cocok dengan rule di dynamic config, atau file YAML belum terbaca. | 1. Cek Traefik Dashboard `:8080/dashboard/` menu HTTP Routers.<br>2. Pastikan `Host(...)` sama persis dengan domain yang diakses.<br>3. Pastikan ekstensi file adalah `.yml` atau `.yaml`.                 |
+| **Traefik 502 Bad Gateway**      | _Bad Gateway (Traefik)_                                            | Traefik tidak dapat menjangkau IP atau Port backend LXC target.                      | 1. Uji `curl -I http://192.168.0.X:PORT` dari LXC 10080.<br>2. Pastikan service di LXC target listen di `0.0.0.0`, bukan `127.0.0.1`.<br>3. Periksa firewall LXC backend (`ufw status` atau PVE firewall). |
+| **Traefik 504 Gateway Timeout**  | _Gateway Timeout_                                                  | Backend menerima koneksi tetapi tidak merespons dalam batas waktu timeout.           | Periksa beban CPU/RAM pada LXC backend target, koneksi database backend, atau timeout limit aplikasi.                                                                                                      |
+| **Docker Compose Error**         | _network web-gateway declared as external, but could not be found_ | Network eksternal belum dibuat sebelum menjalankan stack.                            | Jalankan perintah: `docker network create web-gateway`, lalu ulangi `docker compose up -d`.                                                                                                                |
+| **Dynamic Config Tidak Berubah** | Perubahan di YAML tidak muncul di dashboard                        | Inotify kernel event tidak terpicu, atau sintaks YAML rusak.                         | 1. Edit file langsung di dalam shell LXC 10080.<br>2. Cek `docker compose logs traefik` untuk melihat error parsing YAML.<br>3. Pastikan tidak ada tab (`\t`) dan nama router unik.                        |
 
 ---
 
@@ -887,10 +932,10 @@ docker compose logs traefik | grep -i "error"
 
 Catat setiap perubahan konfigurasi arsitektur, upgrade software, atau perombakan rute pada tabel resmi ini:
 
-| Tanggal | Versi | Rincian Perubahan / Tindakan | Otorisasi / Pelaksana |
-|---|---|---|---|
-| 2026-10-26 | `v1.0` | **Inisialisasi Baseline SSOT:** Rekonsiliasi draf awal arsitektur Ingress Gateway. | Mamay & AI Assistant |
-| 2026-10-27 | `v1.1` | **Production Baseline Final (DevOps Edition):**<br>- Verifikasi resmi IP `192.168.0.80/24` & gateway `192.168.0.1`.<br>- PVE host spec (`nesting=1,keyctl=1`) & CLI provisioning guide.<br>- Prasyarat pembuatan `docker network create web-gateway`.<br>- Standar uji koneksi ephemeral container curl.<br>- SOP lengkap penambahan rute, runbook diagnostik, dan disaster recovery. | Mamay & DevOps Team |
-| 2026-10-27 | `v1.2` | **Penambahan Modul CI/CD In-LXC (Zero GHCR Overhead):**<br>- Standarisasi alur CI/CD mandiri langsung di LXC target aplikasi (misal web1 LXC 100, web2 LXC 101).<br>- Runbook setup GitHub Actions Self-Hosted Runner berorientasi systemd daemon.<br>- Tata kelola keamanan file `.env` statis di host LXC (`/opt/<nama-app>/.env`).<br>- Template workflow `.github/workflows/deploy.yml` lengkap dengan health check & disk storage hygiene (`docker image prune`).<br>- Mitigasi kendala storage build cache & permission socket Docker. | Mamay & DevOps Team |
-| 2026-11-03 | `v1.3` | **Klarifikasi SSOT deployment dan gerbang keamanan:**<br>- Selaraskan recovery LXC dengan Debian 13; tegaskan PVE Web UI/SSH LAN/VPN saja dan koreksi inventaris IP gateway.<br>- Tandai Traefik v3.1 sebagai tidak didukung; tetapkan v3.7.17 sebagai target yang disetujui, dengan verifikasi rollout sebelum go-live.<br>- Hapus Docker Provider/socket dari target gateway; tetapkan File Provider saja dan `forwardedHeaders.trustedIPs` khusus cloudflared.<br>- Jelaskan hak runner grup Docker, syarat workflow tepercaya, dan pengecualian `.env` dari Docker build context.<br>- Tegaskan contoh Node.js/port 3000/database VM 200 bersifat generik; KostKita memakai PostgreSQL di LXC aplikasi. | Pemilik & Agent |
-| 2026-11-03 | `v1.4` | **Pencatatan layanan KostKita yang direncanakan:**<br>- Catat LXC aplikasi `10026`, IP `192.168.0.26`, dan target FQDN `kostkita.sequein.my.id` berdasarkan nilai yang diberikan pemilik.<br>- Tandai LXC sebagai sudah dibuat menurut pemilik, tetapi audit, runtime/port, Docker, runner, route Traefik, dan Public Hostname belum diverifikasi/diterapkan.<br>- Tegaskan firewall LXC dinyatakan nonaktif dan tidak diubah tanpa persetujuan.<br>- Tautkan ADR-004 dan panduan deployment KostKita. | Pemilik & Agent |
+| Tanggal    | Versi  | Rincian Perubahan / Tindakan                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                | Otorisasi / Pelaksana |
+| ---------- | ------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------- |
+| 2026-10-26 | `v1.0` | **Inisialisasi Baseline SSOT:** Rekonsiliasi draf awal arsitektur Ingress Gateway.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          | Mamay & AI Assistant  |
+| 2026-10-27 | `v1.1` | **Production Baseline Final (DevOps Edition):**<br>- Verifikasi resmi IP `192.168.0.80/24` & gateway `192.168.0.1`.<br>- PVE host spec (`nesting=1,keyctl=1`) & CLI provisioning guide.<br>- Prasyarat pembuatan `docker network create web-gateway`.<br>- Standar uji koneksi ephemeral container curl.<br>- SOP lengkap penambahan rute, runbook diagnostik, dan disaster recovery.                                                                                                                                                                                                                                                                                                                       | Mamay & DevOps Team   |
+| 2026-10-27 | `v1.2` | **Penambahan Modul CI/CD In-LXC (Zero GHCR Overhead):**<br>- Standarisasi alur CI/CD mandiri langsung di LXC target aplikasi (misal web1 LXC 100, web2 LXC 101).<br>- Runbook setup GitHub Actions Self-Hosted Runner berorientasi systemd daemon.<br>- Tata kelola keamanan file `.env` statis di host LXC (`/opt/<nama-app>/.env`).<br>- Template workflow `.github/workflows/deploy.yml` lengkap dengan health check & disk storage hygiene (`docker image prune`).<br>- Mitigasi kendala storage build cache & permission socket Docker.                                                                                                                                                                | Mamay & DevOps Team   |
+| 2026-11-03 | `v1.3` | **Klarifikasi SSOT deployment dan gerbang keamanan:**<br>- Selaraskan recovery LXC dengan Debian 13; tegaskan PVE Web UI/SSH LAN/VPN saja dan koreksi inventaris IP gateway.<br>- Tandai Traefik v3.1 sebagai tidak didukung; tetapkan v3.7.17 sebagai target yang disetujui, dengan verifikasi rollout sebelum go-live.<br>- Hapus Docker Provider/socket dari target gateway; tetapkan File Provider saja dan `forwardedHeaders.trustedIPs` khusus cloudflared.<br>- Jelaskan hak runner grup Docker, syarat workflow tepercaya, dan pengecualian `.env` dari Docker build context.<br>- Tegaskan contoh Node.js/port 3000/database VM 200 bersifat generik; KostKita memakai PostgreSQL di LXC aplikasi. | Pemilik & Agent       |
+| 2026-11-03 | `v1.4` | **Pencatatan layanan KostKita yang direncanakan:**<br>- Catat LXC aplikasi `10026`, IP `192.168.0.26`, dan target FQDN `kostkita.sequein.my.id` berdasarkan nilai yang diberikan pemilik.<br>- Tandai LXC sebagai sudah dibuat menurut pemilik, tetapi audit, runtime/port, Docker, runner, route Traefik, dan Public Hostname belum diverifikasi/diterapkan.<br>- Tegaskan firewall LXC dinyatakan nonaktif dan tidak diubah tanpa persetujuan.<br>- Tautkan ADR-004 dan panduan deployment KostKita.                                                                                                                                                                                                      | Pemilik & Agent       |

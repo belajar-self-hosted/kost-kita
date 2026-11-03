@@ -32,6 +32,7 @@ use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\URL;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Validation\Rules\Password;
 
@@ -64,7 +65,8 @@ class AppServiceProvider extends ServiceProvider
         Gate::policy(DepositSettlement::class, DepositSettlementPolicy::class);
         Gate::policy(Expense::class, ExpensePolicy::class);
         if ($this->app->isProduction() || str_starts_with((string) config('app.url'), 'https://')) {
-            \Illuminate\Support\Facades\URL::forceScheme('https');
+            URL::forceRootUrl((string) config('app.url'));
+            URL::forceScheme('https');
         }
 
         $this->configureDefaults();

@@ -31,6 +31,7 @@ Jangan langsung mengimplementasikan kode sebelum memahami keseluruhan kebutuhan,
 Gunakan teknologi berikut:
 
 **Backend**
+
 - Laravel dengan versi stabil yang kompatibel dan didukung.
 - PHP dengan versi yang sesuai.
 - Laravel authentication dan authorization.
@@ -42,6 +43,7 @@ Gunakan teknologi berikut:
 - Laravel Queue jika diperlukan.
 
 **Frontend**
+
 - Svelte dengan TypeScript.
 - Gunakan SvelteKit atau integrasi Laravel + Inertia.js + Svelte berdasarkan analisis arsitektur yang paling sesuai.
 - Tailwind CSS.
@@ -49,17 +51,20 @@ Gunakan teknologi berikut:
 - Reactive UI dan state management yang terorganisasi.
 
 **Database**
+
 - MySQL atau PostgreSQL.
 - Relational database design.
 - Foreign key constraints, indexes, dan appropriate unique constraints.
 - Database migration dan seeder.
 
 **Reporting**
+
 - Export laporan ke Excel (.xlsx).
 - Export laporan ke PDF.
 - Format file harus terstruktur, konsisten, dan sesuai dengan data yang difilter.
 
 **Infrastructure**
+
 - Environment-based configuration.
 - Logging dan error monitoring.
 - Deployment-friendly configuration.
@@ -94,6 +99,7 @@ Arsitektur database sebaiknya mendukung satu pemilik kost memiliki lebih dari sa
 Contoh:
 
 Pemilik B memiliki:
+
 - Kost Melati.
 - Kost Mawar.
 - Kost Anggrek.
@@ -263,6 +269,7 @@ Rekomendasi representasi internal adalah interval half-open:
 `[start_date, end_date)`
 
 Artinya:
+
 - `start_date` termasuk dalam periode penggunaan.
 - `end_date` merupakan batas akhir eksklusif.
 - Dua periode yang saling bersentuhan pada batas akhir tidak dianggap overlap.
@@ -407,12 +414,14 @@ Catatan penting: bedakan antara tanggal akhir masa sewa dan tanggal jatuh tempo 
 Pisahkan data identitas penyewa dan data kontrak atau masa sewanya.
 
 **Tenant (penyewa):**
+
 - Nama.
 - Nomor WhatsApp.
 - Informasi kontak.
 - Catatan.
 
 **Tenancy (masa sewa):**
+
 - Referensi penyewa.
 - Referensi kamar.
 - Tanggal mulai.
@@ -804,11 +813,11 @@ Kategori uang muka harus ditampilkan terpisah untuk analisis tetapi tetap dihitu
 
 Buat tabel dengan kolom:
 
-| Tanggal | Jenis Arus Kas | Kamar | Keterangan | Kas Masuk | Kas Keluar |
-|---|---|---|---|---|---|
-| 01/11/2026 | Pembayaran Sewa | 101 | Sewa Rafi | Rp1.500.000 | - |
-| 02/11/2026 | DP Booking | 102 | DP Andi | Rp300.000 | - |
-| 03/11/2026 | Servis AC | 101 | Perbaikan AC | - | Rp250.000 |
+| Tanggal    | Jenis Arus Kas  | Kamar | Keterangan   | Kas Masuk   | Kas Keluar |
+| ---------- | --------------- | ----- | ------------ | ----------- | ---------- |
+| 01/11/2026 | Pembayaran Sewa | 101   | Sewa Rafi    | Rp1.500.000 | -          |
+| 02/11/2026 | DP Booking      | 102   | DP Andi      | Rp300.000   | -          |
+| 03/11/2026 | Servis AC       | 101   | Perbaikan AC | -           | Rp250.000  |
 
 Berikan total di bagian bawah tabel.
 
@@ -816,9 +825,9 @@ Berikan total di bagian bawah tabel.
 
 Tampilkan:
 
-| Unit Kamar | Nama Penyewa | Tanggal Masuk | Akhir Sewa | Durasi | Status |
-|---|---|---|---|---|---|
-| 101 | Rafi | 01/11/2026 | 31/12/2026 | 2 bulan | Aktif |
+| Unit Kamar | Nama Penyewa | Tanggal Masuk | Akhir Sewa | Durasi  | Status |
+| ---------- | ------------ | ------------- | ---------- | ------- | ------ |
+| 101        | Rafi         | 01/11/2026    | 31/12/2026 | 2 bulan | Aktif  |
 
 Laporan harus dapat menampilkan histori masa sewa berdasarkan filter, bukan hanya penghuni aktif.
 
@@ -826,9 +835,9 @@ Laporan harus dapat menampilkan histori masa sewa berdasarkan filter, bukan hany
 
 Tampilkan:
 
-| Tanggal | Kamar | Jenis Servis | Pekerjaan | Biaya |
-|---|---|---|---|---|
-| 03/11/2026 | 101 | AC | Penggantian kapasitor | Rp250.000 |
+| Tanggal    | Kamar | Jenis Servis | Pekerjaan             | Biaya     |
+| ---------- | ----- | ------------ | --------------------- | --------- |
+| 03/11/2026 | 101   | AC           | Penggantian kapasitor | Rp250.000 |
 
 Sediakan total biaya dan filter berdasarkan jenis servis serta properti.
 

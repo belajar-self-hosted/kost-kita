@@ -16,7 +16,7 @@ Pengguna menjalankan Proxmox VE pada home server dan menetapkan deployment KostK
 - Ikuti baseline LXC aplikasi homelab: unprivileged, `nesting=1,keyctl=1`, Debian 13 Trixie, sekurang-kurangnya 2 vCPU, 2048 MB RAM, dan 20–32 GB disk; sesuaikan resource setelah mengukur build dan beban aplikasi.
 - Jalankan Docker Engine dan Compose Plugin di LXC aplikasi. Compose memuat container aplikasi Laravel dan PostgreSQL, beserta Scheduler/worker yang benar-benar diperlukan.
 - PostgreSQL produksi berada di Compose yang sama dengan aplikasi. Gunakan jaringan Compose internal dan volume persisten; jangan publish port `5432` ke LAN, gateway, atau internet. Pilihan ini khusus KostKita; contoh `VM 200 / 192.168.0.200` pada HOMELAB-SSOT adalah pola contoh layanan lain, bukan host database KostKita.
-- Tentukan port HTTP aplikasi dari image/runtime Laravel yang dipilih saat implementasi. Catat port host tersebut di inventaris layanan; jangan menyalin port `3000` dari contoh aplikasi Node.js pada HOMELAB-SSOT.
+- Publikasikan runtime HTTP Laravel pada port host `8080` di LXC `192.168.0.26`; jangan menyalin port `3000` dari contoh aplikasi Node.js pada HOMELAB-SSOT.
 
 ### Ingress publik dan TLS
 
@@ -26,13 +26,13 @@ Aliran trafik KostKita mengikuti gateway homelab:
 Browser --HTTPS--> Cloudflare Edge
   --encrypted Cloudflare Tunnel--> cloudflared di LXC 10080
   --> Traefik v3 :80 (Dynamic File Provider)
-  --HTTP melalui LAN--> LXC aplikasi KostKita :<APP_HTTP_PORT>
+  --HTTP melalui LAN--> LXC aplikasi KostKita :8080
   --> container Laravel --Compose network internal--> PostgreSQL :5432
 ```
 
 - Pertahankan Cloudflare Tunnel remote-managed yang sudah ada. Gateway publik menargetkan Traefik `v3.7.17` yang disetujui; baseline lama mematok `v3.1`, sehingga versi gateway aktif harus diverifikasi dan di-upgrade sebelum KostKita go-live.
 - Public Hostname di Cloudflare One mengarah ke `traefik:80` di network `web-gateway`; jangan buat tunnel atau reverse proxy kedua pada LXC aplikasi.
-- Tambahkan router dan service unik, misalnya `kostkita-router` dan `kostkita-service`, pada `/opt/ingress/dynamic/kostkita.yml`. Router memakai `kostkita.sequein.my.id` dan meneruskan ke `192.168.0.26:<APP_HTTP_PORT>`; nilai port tetap dicatat di inventaris setelah runtime dipilih.
+- Tambahkan router dan service unik, misalnya `kostkita-router` dan `kostkita-service`, pada `/opt/ingress/dynamic/kostkita.yml`. Router memakai `kostkita.sequein.my.id` dan meneruskan ke `192.168.0.26:8080`; catat port tersebut di inventaris layanan.
 - Routing gateway memakai Dynamic File Provider saja; jangan aktifkan Docker Provider atau mount Docker socket pada Traefik.
 - Cloudflare Edge menangani HTTPS publik. Koneksi dari `cloudflared` ke Traefik dan dari Traefik ke aplikasi memakai HTTP internal sesuai baseline homelab. Konfigurasikan `forwardedHeaders.trustedIPs` pada Traefik untuk subnet Docker `web-gateway` khusus cloudflared; jangan gunakan mode `insecure` atau percaya seluruh LAN. Konfigurasikan `APP_URL` sebagai HTTPS publik dan percayai forwarded headers di Laravel hanya dari gateway `192.168.0.80`.
 - Tidak ada port forwarding 80/443 di router fisik. Jangan buat Public Hostname untuk PostgreSQL, SSH, Proxmox Web UI, atau Traefik Dashboard `:8080`. Dashboard Traefik tetap LAN/VPN saja.

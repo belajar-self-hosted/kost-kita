@@ -15,35 +15,35 @@ Jika aturan aktif dan pertanyaan terbuka tampak bertentangan, pertanyaan terbuka
 3. [Arsitektur Sistem](architecture/overview.md) — batas komponen dan integrasi aplikasi.
 4. Jika mengubah deployment atau ingress, baca [HOMELAB-SSOT](deployment/HOMELAB-SSOT.md) dan [ADR-004](decisions/ADR-004-proxmox-docker-deployment.md) untuk baseline serta keputusan arsitektur; gunakan [Panduan Deployment KostKita](deployment/DEPLOYMENT-GUIDE.md) untuk urutan provisioning, build, smoke test, dan go-live.
 5. Baca aturan bisnis yang sesuai tugas:
-   - [Ketersediaan Kamar](business/availability.md)
-   - [Booking dan Masa Sewa](business/booking-tenancy.md)
-   - [Keuangan dan Laporan](business/finance.md)
-   - [Perawatan dan Biaya Operasional](business/maintenance.md)
+    - [Ketersediaan Kamar](business/availability.md)
+    - [Booking dan Masa Sewa](business/booking-tenancy.md)
+    - [Keuangan dan Laporan](business/finance.md)
+    - [Perawatan dan Biaya Operasional](business/maintenance.md)
 6. Baca [Model Data](data/model.md) dan [Skema Relasional MVP](data/relational-schema.md) untuk relasi fisik; baca [Kontrak Route/Action](architecture/route-actions.md) untuk operasi Laravel. Baca juga [Keamanan dan Akses](security/access-control.md), [Kebutuhan UI](ux/requirements.md), dan [Strategi Kualitas](quality/testing.md) sebelum mengubah area tersebut.
 7. [Roadmap](plan/roadmap.md) mengatur urutan kerja. Keputusan wawancara tercatat di [Keputusan Wawancara](decisions/open-questions.md).
 
 ## Sumber kebenaran per topik
 
-| Topik | Dokumen yang berwenang |
-|---|---|
-| Tujuan dan asumsi produk | product/overview.md |
-| Cakupan dan fase fitur | product/scope.md |
-| Periode dan ketersediaan kamar | business/availability.md |
-| Booking, check-in, check-out, dan perpanjangan | business/booking-tenancy.md |
-| Pembayaran, saldo, arus kas, dan laporan | business/finance.md |
-| Servis dan biaya operasional | business/maintenance.md |
-| Batas sistem dan teknologi | architecture/overview.md, decisions/ADR-001-frontend-integration.md |
-| Route, action, validasi, otorisasi, dan respons Inertia | architecture/route-actions.md |
-| Deployment KostKita dan integrasi homelab | decisions/ADR-004-proxmox-docker-deployment.md; deployment/HOMELAB-SSOT.md adalah acuan bersama untuk ingress, routing publik, CI/CD, dan provisioning layanan |
-| Langkah deployment dan go-live KostKita | deployment/DEPLOYMENT-GUIDE.md |
-| Keputusan basis laporan MVP | decisions/ADR-002-financial-reporting-basis.md |
-| Perlakuan deposit jaminan dan settlement | business/finance.md, decisions/ADR-003-security-deposit-settlement.md |
-| Invariant domain data | data/model.md |
-| Skema relasional, ownership, FK, indeks, dan constraint | data/relational-schema.md |
-| Role, autentikasi, dan isolasi tenant | security/access-control.md |
-| Navigasi dan perilaku antarmuka | ux/requirements.md |
-| Verifikasi kualitas | quality/testing.md |
-| Urutan dan kriteria selesai fase | plan/roadmap.md |
+| Topik                                                   | Dokumen yang berwenang                                                                                                                                         |
+| ------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Tujuan dan asumsi produk                                | product/overview.md                                                                                                                                            |
+| Cakupan dan fase fitur                                  | product/scope.md                                                                                                                                               |
+| Periode dan ketersediaan kamar                          | business/availability.md                                                                                                                                       |
+| Booking, check-in, check-out, dan perpanjangan          | business/booking-tenancy.md                                                                                                                                    |
+| Pembayaran, saldo, arus kas, dan laporan                | business/finance.md                                                                                                                                            |
+| Servis dan biaya operasional                            | business/maintenance.md                                                                                                                                        |
+| Batas sistem dan teknologi                              | architecture/overview.md, decisions/ADR-001-frontend-integration.md                                                                                            |
+| Route, action, validasi, otorisasi, dan respons Inertia | architecture/route-actions.md                                                                                                                                  |
+| Deployment KostKita dan integrasi homelab               | decisions/ADR-004-proxmox-docker-deployment.md; deployment/HOMELAB-SSOT.md adalah acuan bersama untuk ingress, routing publik, CI/CD, dan provisioning layanan |
+| Langkah deployment dan go-live KostKita                 | deployment/DEPLOYMENT-GUIDE.md                                                                                                                                 |
+| Keputusan basis laporan MVP                             | decisions/ADR-002-financial-reporting-basis.md                                                                                                                 |
+| Perlakuan deposit jaminan dan settlement                | business/finance.md, decisions/ADR-003-security-deposit-settlement.md                                                                                          |
+| Invariant domain data                                   | data/model.md                                                                                                                                                  |
+| Skema relasional, ownership, FK, indeks, dan constraint | data/relational-schema.md                                                                                                                                      |
+| Role, autentikasi, dan isolasi tenant                   | security/access-control.md                                                                                                                                     |
+| Navigasi dan perilaku antarmuka                         | ux/requirements.md                                                                                                                                             |
+| Verifikasi kualitas                                     | quality/testing.md                                                                                                                                             |
+| Urutan dan kriteria selesai fase                        | plan/roadmap.md                                                                                                                                                |
 
 Satu aturan hanya didefinisikan di dokumen pemilik topiknya. Dokumen lain boleh menautkannya, tetapi tidak menyalin atau mengubah maknanya. Arsip di archive/ hanya menyimpan bahan historis dan tidak menjadi sumber requirement.
 

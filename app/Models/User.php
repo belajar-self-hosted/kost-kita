@@ -12,7 +12,9 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Log;
 use Laravel\Fortify\TwoFactorAuthenticatable;
+use Symfony\Component\Mailer\Exception\TransportExceptionInterface;
 
 /**
  * @property int $id
@@ -39,6 +41,22 @@ class User extends Authenticatable implements MustVerifyEmail
 {
     /** @use HasFactory<UserFactory> */
     use HasFactory, Notifiable, TwoFactorAuthenticatable;
+
+    public function sendEmailVerificationNotification(): void
+    {
+        try {
+            parent::sendEmailVerificationNotification();
+        } catch (TransportExceptionInterface $exception) {
+            Log::error('Email verification delivery failed.', [
+                'user_id' => $this->getKey(),
+                'exception' => $exception,
+            ]);
+
+            if (app()->bound('session')) {
+                session()->flash('status', 'Akun dibuat, tetapi email verifikasi belum terkirim. Silakan kirim ulang dari halaman verifikasi.');
+            }
+        }
+    }
 
     protected static function booted(): void
     {
