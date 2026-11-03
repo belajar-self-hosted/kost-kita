@@ -10,6 +10,11 @@ FROM node:22-bookworm-slim AS node-source
 # -------------------------------------------------------------
 FROM php:8.3-cli-bookworm AS builder
 
+# Wayfinder generates client route URLs during the Vite build. Keep its origin
+# aligned with production so links never point to the build container's localhost.
+ARG APP_URL=https://kostkita.sequein.my.id
+ENV APP_URL=${APP_URL}
+
 # Install build dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends \
     git \
