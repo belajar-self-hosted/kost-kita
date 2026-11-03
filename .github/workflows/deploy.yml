@@ -1,0 +1,104 @@
+name: Local In-LXC CI/CD Deployment
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+concurrency:
+  group: production-deploy-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: Build & In-Place Deploy on LXC 10026
+    runs-on: [self-hosted, linux, x64, kostkita]
+
+    env:
+      APP_DIR: /opt/kostkita/src
+      ENV_FILE: /opt/kostkita/.env
+      APP_PORT: 8026
+      APP_IP: 192.168.0.26
+
+    steps:
+      - name: Checkout Source Code
+        uses: actions/checkout@v4
+
+      - name: Verify Environment File Exists
+        run: |
+          if [ ! -f "$ENV_FILE" ]; then
+            echo "❌ Error: Production environment file $ENV_FILE not found on host!"
+            echo "Pastikan file $ENV_FILE sudah dibuat dengan permission 600 sebelum deploy."
+            exit 1
+          fi
+          echo "✅ Production environment file $ENV_FILE terverifikasi."
+
+      - name: Sync Source Code to Production Directory
+        run: |
+          echo ">>> Mensinkronkan repository ke $APP_DIR..."
+          mkdir -p "$APP_DIR"
+          rsync -av --delete \
+            --exclude='.env' \
+            --exclude='.env.*' \
+            --exclude='.git' \
+            --exclude='.github' \
+            ./ "$APP_DIR/"
+
+      - name: Validate Compose Configuration
+        working-directory: /opt/kostkita/src
+        run: |
+          echo ">>> Validasi konfigurasi Docker Compose..."
+          docker compose --env-file "$ENV_FILE" config -q
+
+      - name: Build Docker Images Locally
+        working-directory: /opt/kostkita/src
+        run: |
+          echo ">>> Menjalankan build Docker image lokal (in-place tanpa GHCR)..."
+          docker compose --env-file "$ENV_FILE" build --pull
+
+      - name: Start Database & Run Migrations
+        working-directory: /opt/kostkita/src
+        run: |
+          echo ">>> Menyalakan service database PostgreSQL..."
+          docker compose --env-file "$ENV_FILE" up -d db
+
+          echo ">>> Menunggu PostgreSQL siap..."
+          until docker compose --env-file "$ENV_FILE" exec -T db sh -lc 'pg_isready -U "$POSTGRES_USER" -d "$POSTGRES_DB"'; do
+            echo "Menunggu PostgreSQL siap..."
+            sleep 2
+          done
+
+          echo ">>> Menjalankan migrasi database..."
+          docker compose --env-file "$ENV_FILE" run --rm app php artisan migrate --force
+
+      - name: Launch All Services
+        working-directory: /opt/kostkita/src
+        run: |
+          echo ">>> Memulai stack aplikasi (app, web, db, scheduler)..."
+          docker compose --env-file "$ENV_FILE" up -d --remove-orphans
+          docker compose --env-file "$ENV_FILE" ps
+
+      - name: Application Health Check
+        working-directory: /opt/kostkita/src
+        run: |
+          echo ">>> Menunggu service stabil dan melakukan health check..."
+          sleep 5
+
+          echo ">>> Menguji HTTP health check endpoint (/up)..."
+          curl -fsS --retry 5 --retry-delay 3 "http://$APP_IP:$APP_PORT/up" || curl -fsS --retry 5 --retry-delay 3 "http://127.0.0.1:$APP_PORT/up" || {
+            echo "❌ Health check gagal! Service tidak merespons di port $APP_PORT."
+            docker compose --env-file "$ENV_FILE" logs --tail=50
+            exit 1
+          }
+
+          echo ">>> Verifikasi status migrasi database..."
+          docker compose --env-file "$ENV_FILE" exec -T app php artisan migrate:status
+
+          echo "✅ Deployment dan Health Check berhasil!"
+
+      - name: Post-Deployment Storage Hygiene
+        if: always()
+        run: |
+          echo ">>> Membersihkan sisa dangling image Docker..."
+          docker image prune -f
