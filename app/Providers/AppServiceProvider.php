@@ -63,6 +63,10 @@ class AppServiceProvider extends ServiceProvider
         Gate::policy(DepositAccount::class, DepositAccountPolicy::class);
         Gate::policy(DepositSettlement::class, DepositSettlementPolicy::class);
         Gate::policy(Expense::class, ExpensePolicy::class);
+        if ($this->app->isProduction() || str_starts_with((string) config('app.url'), 'https://')) {
+            \Illuminate\Support\Facades\URL::forceScheme('https');
+        }
+
         $this->configureDefaults();
     }
 
