@@ -8,7 +8,11 @@ return new class extends Migration
 {
     public function up(): void
     {
-        DB::statement('DROP INDEX deposit_settlements_account_unique');
+        if (Schema::getConnection()->getDriverName() === 'sqlite') {
+            DB::statement('DROP INDEX deposit_settlements_account_unique');
+        } else {
+            DB::statement('ALTER TABLE deposit_settlements DROP CONSTRAINT deposit_settlements_account_unique');
+        }
         DB::statement("CREATE UNIQUE INDEX deposit_settlements_active_account_unique ON deposit_settlements (tenant_id, deposit_account_id) WHERE status <> 'cancelled'");
 
         if (Schema::getConnection()->getDriverName() === 'sqlite') {
@@ -38,6 +42,10 @@ return new class extends Migration
             DB::statement("ALTER TABLE deposit_settlements ADD CONSTRAINT deposit_settlements_status_check CHECK (status IN ('draft','approved','partially_settled','finalized','late'))");
         }
 
-        DB::statement('CREATE UNIQUE INDEX deposit_settlements_account_unique ON deposit_settlements (tenant_id, deposit_account_id)');
+        if (Schema::getConnection()->getDriverName() === 'sqlite') {
+            DB::statement('CREATE UNIQUE INDEX deposit_settlements_account_unique ON deposit_settlements (tenant_id, deposit_account_id)');
+        } else {
+            DB::statement('ALTER TABLE deposit_settlements ADD CONSTRAINT deposit_settlements_account_unique UNIQUE (tenant_id, deposit_account_id)');
+        }
     }
 };
