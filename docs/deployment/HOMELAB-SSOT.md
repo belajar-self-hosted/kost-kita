@@ -522,290 +522,39 @@ Setiap kali tim DevOps ingin menghubungkan aplikasi baru ke internet via domain 
 
 ## 10. Standar Operasional CI/CD In-LXC (Self-Hosted Runner Tanpa GHCR)
 
-Sistem homelab ini menerapkan arsitektur **Zero-Registry In-LXC CI/CD**. Berbeda dengan alur cloud konvensional yang membutuhkan push/pull image ke registri eksternal (seperti GitHub Container Registry / GHCR atau Docker Hub), seluruh proses penarikan kode, kompilasi Dockerfile, dan reload kontainer dieksekusi secara lokal langsung di dalam LXC aplikasi terkait (misal: repositori `web1` di-build & deploy di LXC 100, `web2` di LXC 101).
+Arsitektur target membangun source dan image lokal pada LXC aplikasi yang sama dengan runtime; tidak membutuhkan GHCR. CI yang lulus untuk commit tepercaya mendahului build, aktivasi dan verifikasi. Gateway ingress meneruskan trafik, bukan menjalankan build aplikasi. Untuk KostKita, [panduan deployment](DEPLOYMENT-GUIDE.md), [ADR-004](../decisions/ADR-004-proxmox-docker-deployment.md), dan workflow dalam repository adalah sumber khusus aplikasi; diagram atau label tidak membuktikan lokasi runner.
 
-> [!NOTE]
-> **Keunggulan Pendekatan In-LXC Homelab:**
->
-> - **Efisiensi Bandwidth Homelab:** Tidak ada proses upload image raksasa ke internet publik lalu men-download-nya kembali ke server lokal.
-> - **Kecepatan Build (Local Layer Caching):** Engine Docker BuildKit memanfaatkan layer cache lokal di SSD Proxmox, membuat proses build jauh lebih cepat.
-> - **Lokasi Rahasia Produksi:** File `.env` berada di LXC target, bukan di runner cloud. Namun workflow runner pada LXC yang sama memiliki akses daemon Docker dan dapat membaca `.env`; perlakukan runner serta perubahan workflow sebagai akses administratif produksi. Jangan cetak rahasia ke log atau artifact GitHub.
+> **KostKita: BLOCKED untuk aktivasi produksi.** Identitas runner/LXC, runtime, kapasitas, ingress serta backup dan restore belum dibuktikan langsung. Perubahan repository bukan izin deployment, migrasi, restart, atau perubahan live; tindakan tersebut memerlukan impact assessment dan persetujuan produksi terpisah.
 
-### 10.1 Arsitektur & Topologi Aliran CI/CD In-LXC
+### 10.1 Batas kepercayaan runner
 
-```text
-[ Developer ] ── (git push origin main) ──► [ GitHub Repository ]
-                                                    │
-                                                    │ Webhook / Polling Job Event
-                                                    ▼
-┌─────────────────────────────────────────────────────────────────────────────┐
-│ Proxmox VE Host — Node Homelab (Bridge: vmbr0)                              │
-│                                                                             │
-│  ┌───────────────────────────────────────────────────────────────────────┐  │
-│  │ Target App LXC (misal: LXC 100 'web1' / LXC 101 'web2')               │  │
-│  │ IP: 192.168.0.100/24 (atau 101)                                       │  │
-│  │                                                                       │  │
-│  │   ┌───────────────────────────────────────────────────────────────┐   │  │
-│  │   │ GitHub Actions Self-Hosted Runner Service (Systemd)           │   │  │
-│  │   │ User: runner (Group: docker)                                  │   │  │
-│  │   │ Custom Label: [self-hosted, linux, x64, web1]                 │   │  │
-│  │   └───────────────────────────────┬───────────────────────────────┘   │  │
-│  │                                   │                                   │  │
-│  │     1. actions/checkout@v4        │ 2. Sinkronisasi Source Code       │  │
-│  │        (Tarik commit lokal)       ▼    (Tanpa menimpa .env lokal)     │  │
-│  │   ┌───────────────────────────────────────────────────────────────┐   │  │
-│  │   │ Direktori Produksi: /opt/<nama-app> (misal /opt/web1)         │   │  │
-│  │   │ - .env (Statis & Rahasia, Permissions 600, Milik Host)        │   │  │
-│  │   │ - docker-compose.yml                                          │   │  │
-│  │   │ - Dockerfile & App Source Code                                │   │  │
-│  │   └───────────────────────────────┬───────────────────────────────┘   │  │
-│  │                                   │                                   │  │
-│  │     3. docker compose up -d       │ 4. Build Image Lokal (No GHCR)    │  │
-│  │        --build --remove-orphans   ▼                                   │  │
-│  │   ┌───────────────────────────────────────────────────────────────┐   │  │
-│  │   │ Docker Engine (Local Daemon di dalam LXC)                     │   │  │
-│  │   │ - Mengkompilasi container aplikasi secara in-place            │   │  │
-│  │   │ - Menjalankan kontainer pada port aplikasi (misal :3000)      │   │  │
-│  │   └───────────────────────────────┬───────────────────────────────┘   │  │
-│  │                                   │                                   │  │
-│  │     5. curl -f http://127.0.0.1:3000 (Health Check)                   │  │
-│  │     6. docker image prune -f         (Storage Cleanup)                │  │
-│  │                                   ▼                                   │  │
-│  │                          [ Deployment Sukses ]                        │  │
-│  └───────────────────────────────────────────────────────────────────────┘  │
-│                                      ▲                                      │
-│                                      │ Trafik HTTP Terbuka via LAN          │
-│  ┌───────────────────────────────────┴───────────────────────────────────┐  │
-│  │ LXC 10080 (gateway-ingress): Traefik v3 ──► Forward ke 192.168.0.X:PORT │  │
-│  └───────────────────────────────────────────────────────────────────────┘  │
-└─────────────────────────────────────────────────────────────────────────────┘
-```
+Verifikasi runner GitHub yang benar melalui registrasi dan service aktual, lalu cocokkan node, LXC ID, hostname, IP, user dan workspace. Jangan menyimpulkan host dari nama atau labels. Akses daemon Docker setara kontrol administratif terhadap LXC dan data yang dapat diaksesnya; perlakukan runner dan perubahan workflow sebagai akses produksi. Gunakan branch terlindungi, kode/action tepercaya dan gerbang CI yang sama pada jalur otomatis maupun manual; jangan jalankan job PR/fork tidak tepercaya pada runner produksi.
 
-### 10.2 Prasyarat Konfigurasi LXC Target di Proxmox VE
+### 10.2 Pemeriksaan LXC dan kapasitas
 
-Agar LXC target dapat menjalankan Docker Engine dan bertindak sebagai runner lokal, container harus memenuhi spesifikasi Proxmox berikut:
+Secara read-only, inventarisasi OS, fitur LXC, Docker/Compose, permission, disk/inode, RAM, CPU dan resource limit, lalu bandingkan dengan beban build dan layanan aktual. Nilai awal 2 vCPU, 2 GB RAM dan disk 20–32 GB bukan jaminan kapasitas. Perubahan fitur LXC, instalasi paket, resize, reboot dan pengaturan runner adalah perubahan live yang memerlukan rencana dampak dan persetujuan tersendiri.
 
-#### 1. Fitur Kernel LXC (`/etc/pve/lxc/<ID>.conf`)
+### 10.3 Pengelolaan source dan rahasia
 
-Periksa konfigurasi container di host Proxmox (contoh `/etc/pve/lxc/100.conf`):
+Simpan source kandidat terpisah dari release aktif, rahasia dan data persisten; identifikasi kandidat dan release aktif dengan SHA. Jangan sinkronisasi destruktif ke direktori bersama yang memuat rahasia atau volume. Simpan environment produksi di luar build context, batasi hak akses dan pastikan file lain tidak mengesampingkannya. Kecualikan `.env`, `.env.*` dan rahasia dari build context, log, image dan artifact. Hindari mencetak konfigurasi Compose hasil interpolasi, karena dapat mengungkap rahasia.
 
-```text
-features: nesting=1,keyctl=1
-```
+### 10.4 Gerbang deploy dan migrasi
 
-> [!IMPORTANT]
->
-> - `nesting=1`: Wajib agar Docker dapat membuat cgroup & namespace jaringan di dalam LXC unprivileged.
-> - `keyctl=1`: Menghindari permission error pada storage driver Docker `overlay2`.
-> - Jika fitur ini belum aktif, jalankan di shell Proxmox Host:
->     ```bash
->     pct set <ID> -features nesting=1,keyctl=1
->     pct reboot <ID>
->     ```
+Lindungi semua jalur deploy dengan hasil CI untuk SHA yang sama, lock yang meliputi target dan operator lain, serta kebijakan urutan release. Build kandidat sebelum mengubah layanan aktif; jika aktivasi terdiri dari beberapa service, siapkan penanganan keadaan parsial dan downtime. Tinjau migrasi untuk kompatibilitas schema dengan release lama dan baru serta buktikan backup dan restore sebelum aktivasi. Jangan otomatis menjalankan `migrate:rollback` atau menghapus volume data.
 
-#### 2. Rekomendasi Alokasi Resource LXC Aplikasi
+### 10.5 Workflow spesifik aplikasi
 
-- **Disk Space:** Minimal 20 GB – 32 GB (proses build Docker lokal dan layer caching membutuhkan cadangan ruang disk).
-- **RAM & CPU:** Minimal 2 vCPU dan 2048 MB RAM (sesuaikan dengan beban kompilasi bahasa/framework seperti Next.js, Node.js, atau Go).
+Jangan menyalin template in-place lama: sinkronisasi aktif, build dan `compose up` tanpa gerbang CI yang setara, koordinasi, health berbasis release dan rollback tidak cukup aman. Ikuti workflow serta skrip yang ditinjau di repository aplikasi dan uji dalam lingkungan terisolasi. Untuk KostKita lihat [workflow deployment](../../.github/workflows/deploy.yml) dan [rencana remediasi](../../REMEDIATION-PLAN.md); implementasi repository tidak membuktikan konfigurasi atau deployment live.
 
----
+### 10.6 Kesehatan, retensi dan recovery
 
-### 10.3 Runbook Setup Self-Hosted Runner di LXC Target
+Verifikasi commit/image yang benar, app dan database, asset, scheduler, worker bila digunakan, dan jalur ingress; kegagalan health harus dilaporkan sebagai kegagalan deployment. Simpan release sebelumnya dan lindungi data; pilih cleanup hanya setelah mengetahui pemilik dan retensi image/cache/volume. Jangan menggunakan prune global atau mengubah kapasitas dan service live tanpa pemeriksaan dampak dan persetujuan. Simpan backup di luar node dan uji restore secara terisolasi.
 
-Jalankan prosedur ini satu kali pada setiap LXC aplikasi (misal LXC 100 untuk `web1` atau LXC 101 untuk `web2`):
+### 10.7 Status remediasi KostKita (3 November 2026)
 
-> [!CAUTION]
-> User `runner` yang menjadi anggota grup `docker` bukan principal tanpa hak istimewa: akses Docker daemon setara kontrol administratif/root pada LXC dan memungkinkan workflow membaca `.env` yang dimiliki `runner`. Isolasi runner pada LXC aplikasi, lindungi branch default, izinkan hanya push dari branch terlindungi dan pemicu manual untuk deploy, serta jangan jalankan workflow dari pull request/fork atau kode/action yang tidak dipercaya. Perlakukan setiap perubahan workflow sebagai perubahan akses produksi ([Docker post-installation](https://docs.docker.com/engine/install/linux-postinstall/), [Docker security](https://docs.docker.com/engine/security/)).
+Remote deploy workflow ID `405389177` masih aktif; Actions read-only snapshot pukul 20:21 WIB tidak menunjukkan run nonterminal, tetapi workflow belum dapat dinonaktifkan karena konektor yang tersedia tidak memiliki operasi `Actions: write`. Remote `main` tetap menjadi sumber eksekusi sampai mitigasi dilakukan. Workflow lokal yang disiapkan hanya merespons completion sukses dari `tests` ID `405373892` untuk push `main` dan SHA yang sama, tidak memiliki `workflow_dispatch`, memakai satu concurrency group berantrean, dan membutuhkan repository variable `KOSTKITA_DEPLOYMENT_ENABLED=true`. Sebelum mengaktifkan variable, required reviewers dan branch restriction pada environment `production` harus dibuat dan diverifikasi; kedua kondisi tersebut belum terbukti.
 
-```bash
-# -------------------------------------------------------------
-# LANGKAH 1: Persiapan Dependensi & User Khusus Runner
-# -------------------------------------------------------------
-# Pastikan Docker CE & utilitas dasar sudah terpasang di LXC
-apt-get update && apt-get install -y curl tar jq rsync git sudo
-
-# Buat user non-root khusus 'runner' (standar keamanan GitHub Actions Runner)
-id -u runner &>/dev/null || adduser --disabled-password --gecos "" runner
-
-# Berikan akses daemon Docker kepada runner; akses ini berhak tinggi (lihat peringatan di atas)
-usermod -aG docker runner
-
-# Standarisasi direktori aplikasi /opt/<nama-app>
-# (Contoh untuk aplikasi 'web1')
-APP_NAME="web1"
-mkdir -p /opt/${APP_NAME}
-chown -R runner:runner /opt/${APP_NAME}
-
-# -------------------------------------------------------------
-# LANGKAH 2: Unduh & Konfigurasi GitHub Actions Runner
-# -------------------------------------------------------------
-# Masuk sebagai user runner
-su - runner
-mkdir -p ~/actions-runner && cd ~/actions-runner
-
-# Unduh binary runner resmi terbaru (arsitektur x64 linux)
-RUNNER_VERSION=$(curl -s https://api.github.com/repos/actions/runner/releases/latest | jq -r '.tag_name' | sed 's/v//')
-curl -o actions-runner-linux-x64-${RUNNER_VERSION}.tar.gz -L \
-  https://github.com/actions/runner/releases/download/v${RUNNER_VERSION}/actions-runner-linux-x64-${RUNNER_VERSION}.tar.gz
-
-tar xzf ./actions-runner-linux-x64-${RUNNER_VERSION}.tar.gz
-
-# Registrasi runner ke GitHub Repository terkait
-# (Token didapatkan dari: GitHub Repo -> Settings -> Actions -> Runners -> New self-hosted runner)
-# PENTING: Berikan custom label spesifik nama aplikasi (misal: web1)
-./config.sh \
-  --url https://github.com/<USERNAME_ATAU_ORG>/<NAMA_REPO> \
-  --token <REGISTRATION_TOKEN_DARI_GITHUB> \
-  --name "lxc-<ID>-${APP_NAME}" \
-  --labels "self-hosted,linux,x64,${APP_NAME}" \
-  --work "_work" \
-  --unattended
-
-exit # Kembali ke user root
-
-# -------------------------------------------------------------
-# LANGKAH 3: Daftarkan & Jalankan Runner sebagai Systemd Daemon
-# -------------------------------------------------------------
-cd /home/runner/actions-runner
-./svc.sh install runner
-./svc.sh start
-
-# Periksa status daemon runner
-./svc.sh status
-```
-
-> [!TIP]
-> Status runner akan langsung muncul sebagai **Idle (Hijau)** pada menu repositori GitHub: **Settings > Actions > Runners**.
-
----
-
-### 10.4 Standarisasi Direktori Produksi & Pengamanan `.env`
-
-Untuk menjaga konsistensi dengan Ingress Gateway di `/opt/ingress`, seluruh aplikasi backend distandarisasi di direktori `/opt/<nama-aplikasi>`.
-
-> **Batas contoh generik:** Contoh `.env` di Bagian 10.4 memakai `web1`, Node.js, port `3000`, dan database contoh di `192.168.0.200`; workflow di Bagian 10.5 juga memakai nama direktori dan port contoh. Nilai tersebut bukan ketentuan untuk semua aplikasi. Ikuti ADR aplikasi untuk runtime, port, dan lokasi database. Untuk KostKita, [ADR-004](../decisions/ADR-004-proxmox-docker-deployment.md) menetapkan PostgreSQL dalam Docker Compose di LXC aplikasi KostKita; jangan memakai host contoh VM 200 atau memublikasikan port PostgreSQL.
-
-#### Layout Direktori `/opt/<nama-aplikasi>/`:
-
-```text
-/opt/web1/
-├── .env                  # Rahasia produksi (chmod 600, TIDAK di-commit ke Git)
-├── docker-compose.yml    # Definisi service & port binding internal
-├── Dockerfile            # Blueprint build image aplikasi
-└── src/                  # Kode sumber aplikasi yang disinkronkan oleh CI/CD
-```
-
-#### Tata Kelola File `.env` Produksi:
-
-1. Siapkan file `.env` langsung di dalam server LXC satu kali saat inisialisasi:
-    ```bash
-    cat << 'EOF' > /opt/web1/.env
-    NODE_ENV=production
-    PORT=3000
-    DATABASE_URL=postgresql://user:secret@192.168.0.200:5432/web1_db
-    SECRET_KEY=kunci_rahasia_homelab_yang_sangat_panjang
-    EOF
-
-    # Kunci hak akses agar hanya user root dan runner yang dapat membaca
-    chmod 600 /opt/web1/.env
-    chown runner:runner /opt/web1/.env
-    ```
-2. Workflow CI/CD **dilarang menimpa atau menghapus** file `.env` ini. Source code yang di-checkout dari GitHub akan disinkronkan ke `/opt/<nama-aplikasi>/` dengan proteksi `--exclude='.env'`.
-3. Karena direktori produksi juga menjadi Docker build context, letakkan `.dockerignore` di root context dan kecualikan file rahasia sebelum `docker compose build` ([Docker build context](https://docs.docker.com/build/concepts/context/)):
-    ```text
-    .env
-    .env.*
-    **/.env
-    **/.env.*
-    !.env.example
-    ```
-    Workflow deployment tetap dapat memakai `.env` untuk konfigurasi runtime Compose; file tersebut tidak boleh dikirim sebagai build context atau disalin ke image.
-
----
-
-### 10.5 Template Produksi Workflow GitHub Actions (`.github/workflows/deploy.yml`)
-
-Simpan template workflow ini di dalam repositori kode aplikasi pada `.github/workflows/deploy.yml`.
-Workflow ini berjalan **100% lokal di dalam LXC**, tanpa menggunakan kuota menit build GitHub Cloud dan tanpa registri container:
-
-```yaml
-name: Local In-LXC CI/CD Deployment
-
-on:
-    push:
-        branches:
-            - main
-            - master
-    workflow_dispatch: # Memungkinkan trigger manual via UI GitHub Actions
-
-concurrency:
-    group: production-deploy-${{ github.ref }}
-    cancel-in-progress: false # Cegah deploy bersamaan saling bertabrakan
-
-jobs:
-    deploy:
-        name: Build & In-Place Deploy on Target LXC
-        # Wajib mencocokkan custom label runner pada LXC target (contoh: web1)
-        runs-on: [self-hosted, linux, x64, web1]
-
-        env:
-            APP_DIR: /opt/web1
-            APP_PORT: 3000
-
-        steps:
-            - name: Checkout Source Code
-              uses: actions/checkout@v4
-
-            - name: Sync Source Code to Production Directory
-              run: |
-                  echo ">>> Mensinkronkan file repository ke direktori produksi $APP_DIR..."
-                  # rsync file repo ke /opt/web1 dengan mengecualikan .env agar konfigurasi lokal aman
-                  rsync -av --delete \
-                    --exclude='.env' \
-                    --exclude='.env.*' \
-                    --exclude='.git' \
-                    --exclude='.github' \
-                    ./ "$APP_DIR/"
-
-            - name: Build & Launch Docker Container In-Place
-              working-directory: /opt/web1
-              run: |
-                  echo ">>> Menjalankan build Docker image lokal (tanpa GHCR)..."
-                  # Build ulang image secara lokal lalu reload kontainer tanpa downtime lama
-                  docker compose build --pull
-                  docker compose up -d --remove-orphans
-
-            - name: Application Health Check
-              run: |
-                  echo ">>> Menunggu service stabil dan melakukan health check..."
-                  sleep 5
-                  # Verifikasi apakah aplikasi merespons HTTP request di port internal
-                  curl -fsS --retry 5 --retry-delay 3 http://127.0.0.1:$APP_PORT/ || {
-                    echo "❌ Health check gagal! Service tidak merespons di port $APP_PORT."
-                    docker compose -f "$APP_DIR/docker-compose.yml" logs --tail=50
-                    exit 1
-                  }
-                  echo "✅ Health check berhasil! Aplikasi berjalan normal di port $APP_PORT."
-
-            - name: Post-Deployment Storage Hygiene
-              if: always()
-              run: |
-                  echo ">>> Membersihkan sisa build cache dan dangling images..."
-                  # Menghapus image sisa (<none>:<none>) untuk menjaga kapasitas disk LXC
-                  docker image prune -f
-```
-
----
-
-### 10.6 Runbook Storage Hygiene & Mitigasi Kendala CI/CD In-LXC
-
-| Kendala / Error                       | Gejala & Indikasi                                                                                         | Solusi & Tindakan Perbaikan                                                                                                                                                                                                                                                                                                    |
-| ------------------------------------- | --------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| **No Space Left on Device**           | Build Docker gagal dengan pesan `no space left on device` saat kompilasi layer.                           | 1. Di dalam LXC, periksa sisa disk: `df -h`.<br>2. Hapus build cache lama: `docker builder prune -a -f --filter "until=48h"`.<br>3. Bersihkan container stop: `docker container prune -f`.<br>4. Tambah kapasitas disk via Proxmox Host: `pct resize <ID> rootfs +10G`.                                                        |
-| **Permission Denied Docker Socket**   | Runner gagal menjalankan docker: `Got permission denied while trying to connect to Docker daemon socket`. | User `runner` belum terdaftar di grup `docker`. Jalankan di shell LXC: `usermod -aG docker runner`, lalu restart service runner: `systemctl restart actions.runner.*`.                                                                                                                                                         |
-| **Runner Offline di GitHub**          | Job GitHub Actions pending dengan status `Waiting for a runner to pick up this job`.                      | 1. Masuk ke shell LXC target.<br>2. Cek status daemon: `cd /home/runner/actions-runner && ./svc.sh status`.<br>3. Jika stop/mati: jalankan `./svc.sh start` atau periksa koneksi internet LXC (`curl -I https://github.com`).                                                                                                  |
-| **Health Check Timeout (Port Gagal)** | Workflow gagal di step `Application Health Check`.                                                        | 1. Periksa log container aplikasi: `docker compose -f /opt/<nama-app>/docker-compose.yml logs --tail=100`.<br>2. Pastikan service di dalam container mendengarkan pada `0.0.0.0`, bukan hanya `127.0.0.1` di dalam container.<br>3. Pastikan port binding di `docker-compose.yml` sudah benar (contoh `ports: - "3000:3000"`). |
-| **File `.env` Terhapus / Timpa**      | Variabel rahasia hilang setelah push git baru.                                                            | Pastikan perintah `rsync` selalu menyertakan opsi `--exclude='.env'`. Lakukan backup berkala file `/opt/<app>/.env`.                                                                                                                                                                                                           |
+Compose lokal menjalankan app dan scheduler sebagai `www-data`. Image menyiapkan owner/mode pada build; runtime entrypoint tidak melakukan recursive `chown`/`chmod` pada storage persisten dan gagal tertutup jika Laravel directories tidak writable. Deployment script menguji akses direktori sebelum aktivasi. Owner/mode volume yang sudah ada tetap belum diperiksa di LXC dan dapat memblokir deployment. Migrasi pending menghentikan deployment otomatis; migrasi tidak dieksekusi atau dibalik secara otomatis. Implementasi ini tidak membuktikan lokasi runner, Proxmox CT ID, runtime, ingress, backup, restore atau rollback rehearsal.
 
 ---
 
@@ -939,3 +688,6 @@ Catat setiap perubahan konfigurasi arsitektur, upgrade software, atau perombakan
 | 2026-10-27 | `v1.2` | **Penambahan Modul CI/CD In-LXC (Zero GHCR Overhead):**<br>- Standarisasi alur CI/CD mandiri langsung di LXC target aplikasi (misal web1 LXC 100, web2 LXC 101).<br>- Runbook setup GitHub Actions Self-Hosted Runner berorientasi systemd daemon.<br>- Tata kelola keamanan file `.env` statis di host LXC (`/opt/<nama-app>/.env`).<br>- Template workflow `.github/workflows/deploy.yml` lengkap dengan health check & disk storage hygiene (`docker image prune`).<br>- Mitigasi kendala storage build cache & permission socket Docker.                                                                                                                                                                | Mamay & DevOps Team   |
 | 2026-11-03 | `v1.3` | **Klarifikasi SSOT deployment dan gerbang keamanan:**<br>- Selaraskan recovery LXC dengan Debian 13; tegaskan PVE Web UI/SSH LAN/VPN saja dan koreksi inventaris IP gateway.<br>- Tandai Traefik v3.1 sebagai tidak didukung; tetapkan v3.7.17 sebagai target yang disetujui, dengan verifikasi rollout sebelum go-live.<br>- Hapus Docker Provider/socket dari target gateway; tetapkan File Provider saja dan `forwardedHeaders.trustedIPs` khusus cloudflared.<br>- Jelaskan hak runner grup Docker, syarat workflow tepercaya, dan pengecualian `.env` dari Docker build context.<br>- Tegaskan contoh Node.js/port 3000/database VM 200 bersifat generik; KostKita memakai PostgreSQL di LXC aplikasi. | Pemilik & Agent       |
 | 2026-11-03 | `v1.4` | **Pencatatan layanan KostKita yang direncanakan:**<br>- Catat LXC aplikasi `10026`, IP `192.168.0.26`, dan target FQDN `kostkita.sequein.my.id` berdasarkan nilai yang diberikan pemilik.<br>- Tandai LXC sebagai sudah dibuat menurut pemilik, tetapi audit, runtime/port, Docker, runner, route Traefik, dan Public Hostname belum diverifikasi/diterapkan.<br>- Tegaskan firewall LXC dinyatakan nonaktif dan tidak diubah tanpa persetujuan.<br>- Tautkan ADR-004 dan panduan deployment KostKita.                                                                                                                                                                                                      | Pemilik & Agent       |
+| 2026-11-03 | `v1.5` | **Koreksi CI/CD:** hapus contoh workflow in-place yang tidak memenuhi gerbang CI, kesehatan dan recovery; pisahkan persetujuan perubahan repository dari aktivasi produksi dan tandai status live KostKita belum diverifikasi.                                                                                                                                                                                                                                                                                                                                                                                                                                                                              | Pemilik & Agent       |
+| 2026-11-03 | `v1.6` | **Remediasi repository KostKita:** catat gate deployment eksplisit dan environment protection yang masih perlu disiapkan; verifikasi identitas release/rollback; hilangkan perubahan permission storage rekursif saat container berjalan; pertahankan status workflow remote lama dan runtime sebagai blocker yang belum terselesaikan.                                                                                                                                                                                                                                                                                                                                                                     | Pemilik & Agent       |
+| 2026-11-03 | `v1.7` | **Penguatan dan validasi CI/CD KostKita (lokal saja):** workflow hanya men-deploy SHA dari `tests` sukses pada `main`; no manual dispatch/GHCR; host target, Compose, `.env`, disk/inode, scheduler, release SHA/asset dan rollback guards ditambahkan; migrations pending fail closed dan tidak otomatis dijalankan; regression tests/actionlint masuk quality gates. Workflow legacy remote, protected branch/environment, identitas Proxmox/runner, backup/restore, schema, ingress dan rollback rehearsal tetap belum terverifikasi.                                                                                                                                                                    | Pemilik & Agent       |

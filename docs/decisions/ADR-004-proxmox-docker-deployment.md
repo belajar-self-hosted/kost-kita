@@ -1,18 +1,18 @@
 # ADR-004: Deployment KostKita pada Homelab Mamay
 
-- Status: accepted
+- Status: accepted (target architecture; live deployment not verified)
 - Tanggal: 2026-11-03
 - Pemilik keputusan: pengguna
 
 ## Konteks
 
-Pengguna menjalankan Proxmox VE pada home server dan menetapkan deployment KostKita di LXC menggunakan Docker. LXC aplikasi sudah dialokasikan sebagai ID `10026` pada IP `192.168.0.26`; domain/subdomain publiknya `kostkita.sequein.my.id`. Aplikasi perlu dapat diakses melalui HTTPS. Topologi ingress dan CI/CD homelab sudah ditetapkan pada [HOMELAB-SSOT](../deployment/HOMELAB-SSOT.md), yang menjadi acuan untuk gateway bersama.
+Pengguna menjalankan Proxmox VE pada home server dan menetapkan deployment KostKita di LXC menggunakan Docker. Pemilik menyatakan LXC aplikasi sudah dialokasikan sebagai ID `10026` pada IP `192.168.0.26`; identitas serta keadaan aktual belum diverifikasi; domain/subdomain publiknya `kostkita.sequein.my.id`. Aplikasi perlu dapat diakses melalui HTTPS. Topologi ingress dan CI/CD homelab sudah ditetapkan pada [HOMELAB-SSOT](../deployment/HOMELAB-SSOT.md), yang menjadi acuan untuk gateway bersama.
 
 ## Keputusan
 
 ### LXC aplikasi dan Docker Compose
 
-- Gunakan LXC khusus KostKita ID `10026`, IP statis `192.168.0.26/24` pada `vmbr0`, gateway `192.168.0.1`. LXC ini berbeda dari gateway ingress LXC `10080` (`gateway-ingress`, `192.168.0.80`). LXC sudah dibuat; Docker/Compose dan runner masih harus diaudit/dikonfigurasi.
+- Gunakan LXC khusus KostKita ID `10026`, IP statis `192.168.0.26/24` pada `vmbr0`, gateway `192.168.0.1`. LXC ini berbeda dari gateway ingress LXC `10080` (`gateway-ingress`, `192.168.0.80`). LXC dinyatakan sudah dibuat oleh pemilik; node, identitas, Docker/Compose dan runner masih harus diverifikasi secara read-only.
 - Ikuti baseline LXC aplikasi homelab: unprivileged, `nesting=1,keyctl=1`, Debian 13 Trixie, sekurang-kurangnya 2 vCPU, 2048 MB RAM, dan 20–32 GB disk; sesuaikan resource setelah mengukur build dan beban aplikasi.
 - Jalankan Docker Engine dan Compose Plugin di LXC aplikasi. Compose memuat container aplikasi Laravel dan PostgreSQL, beserta Scheduler/worker yang benar-benar diperlukan.
 - PostgreSQL produksi berada di Compose yang sama dengan aplikasi. Gunakan jaringan Compose internal dan volume persisten; jangan publish port `5432` ke LAN, gateway, atau internet. Pilihan ini khusus KostKita; contoh `VM 200 / 192.168.0.200` pada HOMELAB-SSOT adalah pola contoh layanan lain, bukan host database KostKita.
@@ -40,10 +40,14 @@ Browser --HTTPS--> Cloudflare Edge
 
 ### CI/CD dan rahasia produksi
 
-- Ikuti standar In-LXC CI/CD pada HOMELAB-SSOT: GitHub Actions self-hosted runner berjalan di LXC aplikasi, source di-checkout/sinkronkan di sana, image dibangun lokal, lalu Compose menjalankan deployment. Jangan gunakan GHCR untuk alur ini.
-- Runner yang menjadi anggota grup `docker` diperlakukan sebagai principal produksi berhak administratif pada LXC; alur deployment hanya boleh berjalan dari branch terlindungi atau pemicu manual yang diotorisasi. Jangan jalankan job pull request dari fork tidak tepercaya atau kode/action yang tidak dipercaya.
+- Ikuti standar In-LXC CI/CD pada HOMELAB-SSOT: GitHub Actions self-hosted runner berjalan pada LXC aplikasi; checkout harus tepat ke SHA yang lulus workflow `tests`, arsip release dibangun lokal, lalu Compose mengaktifkan image tersebut. Jangan gunakan GHCR untuk alur ini.
+- Runner yang menjadi anggota grup `docker` diperlakukan sebagai principal produksi berhak administratif pada LXC. Workflow lokal tidak menyediakan `workflow_dispatch`; ia memerlukan CI sukses untuk push `main`, concurrency target tunggal, dan deployment flag eksplisit. Sebelum flag dibuka, lindungi `main`, atur environment `production` dengan reviewer/branch restriction, dan buktikan lokasi runner pada LXC. Jangan jalankan job pull request dari fork tidak tepercaya atau kode/action yang tidak dipercaya.
 - Simpan `.env` produksi di LXC aplikasi dengan mode `600`; exclude dari sinkronisasi source dan jangan commit ke repository. Karena Compose memakai file ini sementara direktori menjadi build context, `.dockerignore` wajib mengecualikan `.env`, `.env.*`, dan file rahasia lainnya dari build context. Workflow boleh membaca rahasia untuk deployment runtime, tetapi tidak boleh mencetak atau mengemasnya ke log/artifact/image. Token Cloudflare tetap hanya berada pada gateway ingress.
-- Health check deployment harus memastikan aplikasi merespons sebelum rilis dianggap berhasil. Jaga data PostgreSQL di volume persisten, backup database rutin ke storage di luar node Proxmox, dan uji restore.
+- Health check deployment harus membuktikan commit/release aktif, kesehatan layanan dan database, asset, scheduler, serta ingress jika sudah diaktifkan; worker juga diperiksa bila dipakai. Jaga data PostgreSQL di volume persisten, backup database rutin ke storage di luar node Proxmox, dan uji restore.
+
+> **Gerbang produksi:** perubahan repository telah diizinkan, tetapi aktivasi produksi, migrasi, restart dan perubahan infrastruktur live memerlukan persetujuan terpisah. Identitas host/runner, backup dan restore serta kesiapan layanan masih **BLOCKED** sampai ada bukti live. Lihat [panduan](../deployment/DEPLOYMENT-GUIDE.md) dan [rencana remediasi](../../REMEDIATION-PLAN.md).
+
+> **Status workflow remote, 3 November 2026:** deploy workflow legacy ID `405389177` masih aktif. Snapshot Actions read-only pukul 20:21 WIB tidak menunjukkan run queued/aktif; pemeriksaan ulang pukul 21:37 WIB terhalang halaman “Page not found”, jadi state run/workflow terbaru tidak diketahui. Tool untuk membaca run terbaru atau men-disable workflow tidak tersedia. Workflow lokal yang diremediasi belum di-push, dan repository environment/protections belum dikonfigurasi atau diverifikasi.
 
 ## Konsekuensi dan trade-off
 
@@ -52,7 +56,7 @@ Browser --HTTPS--> Cloudflare Edge
 - Sebelum route publik KostKita diaktifkan, periksa versi Traefik yang benar-benar berjalan, hapus konfigurasi Docker Provider/socket pada rollout gateway, tetapkan trusted subnet cloudflared, dan catat `kostkita.sequein.my.id`, LXC `10026`/`192.168.0.26`, serta port HTTP pada service inventory.
 - Menggabungkan PostgreSQL dengan aplikasi dalam satu LXC mengikuti keputusan pengguna dan menyederhanakan resource homelab. Volume persisten dan backup off-host wajib untuk melindungi data; service PostgreSQL tetap tidak terekspos di jaringan publik.
 - Proxmox menjelaskan LXC unprivileged dan opsi nesting, serta merekomendasikan container bertingkat di dalam QEMU VM untuk kebutuhan isolasi maksimum atau live migration. KostKita mengikuti pilihan LXC pengguna; tinjau ulang bila kebutuhan isolasi/availability berubah.
-- ID LXC, IP, domain, dan subdomain KostKita sudah ditetapkan dan dicatat pada inventaris sebagai rencana. LXC dinyatakan sudah dibuat oleh pemilik, tetapi parameter aktual dan keadaan layanan harus diverifikasi saat audit. Port HTTP belum dipilih; catat setelah runtime ditetapkan. Jangan menandai rute aktif sebelum gateway dan Cloudflare diuji.
+- ID LXC, IP, domain, dan subdomain KostKita sudah ditetapkan dan dicatat pada inventaris sebagai rencana. LXC dinyatakan sudah dibuat oleh pemilik, tetapi parameter aktual dan keadaan layanan harus diverifikasi saat audit. Port target HTTP `8080` sudah dipilih; listener dan route aktual masih perlu diverifikasi. Jangan menandai rute aktif sebelum gateway dan Cloudflare diuji.
 
 ## Sumber acuan
 

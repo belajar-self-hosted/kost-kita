@@ -55,16 +55,19 @@ RUN npm ci
 # Copy project source code for build
 COPY . .
 
-# Build frontend assets (Vite + Svelte 5 + Wayfinder)
-RUN npm run build
-
-# Finalize autoloader
+# Discover production providers before Wayfinder runs Artisan during Vite build.
 RUN composer dump-autoload --optimize --no-dev
+
+# Build frontend assets (Vite + Svelte 5 + Wayfinder)
+RUN npm run build && rm -rf node_modules
 
 # -------------------------------------------------------------
 # Stage 3: Production PHP-FPM Application Runtime
 # -------------------------------------------------------------
 FROM php:8.3-fpm-bookworm AS app
+
+ARG KOSTKITA_RELEASE_SHA=unknown
+LABEL org.opencontainers.image.revision=$KOSTKITA_RELEASE_SHA
 
 # Install production runtime libraries
 RUN apt-get update && apt-get install -y --no-install-recommends \
@@ -97,6 +100,9 @@ WORKDIR /var/www/html
 
 # Copy application source & built assets from builder
 COPY --from=builder /app /var/www/html
+RUN test ! -d /var/www/html/node_modules && test -f /var/www/html/public/build/manifest.json
+RUN printf "%s\n" "$KOSTKITA_RELEASE_SHA" > /var/www/html/release.sha \
+    && cp /var/www/html/release.sha /var/www/html/public/release.txt
 
 # Validate PHP platform requirements for production dependencies
 RUN composer check-platform-reqs --no-dev
@@ -105,7 +111,9 @@ RUN composer check-platform-reqs --no-dev
 COPY docker/entrypoint.sh /usr/local/bin/entrypoint.sh
 RUN chmod +x /usr/local/bin/entrypoint.sh
 
-# Set directory permissions for Laravel
+# Set image-layer ownership for a newly initialized named storage volume.
+# Existing persistent volumes are validated at deployment; runtime does not
+# recursively rewrite ownership or mode bits on stored user files.
 RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache \
     && chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache
 
@@ -126,6 +134,9 @@ RUN composer install --no-interaction --prefer-dist
 # Stage 5: Production Web Server (Nginx)
 # -------------------------------------------------------------
 FROM nginx:1.27-alpine AS web
+
+ARG KOSTKITA_RELEASE_SHA=unknown
+LABEL org.opencontainers.image.revision=$KOSTKITA_RELEASE_SHA
 
 # Install curl for container healthcheck
 RUN apk add --no-cache curl
