@@ -38,7 +38,7 @@ jobs:
         run: |
           echo ">>> Mensinkronkan repository ke $APP_DIR..."
           mkdir -p "$APP_DIR"
-          rsync -av --delete \
+          rsync -av --no-o --no-g --delete \
             --exclude='.env' \
             --exclude='.env.*' \
             --exclude='.git' \
