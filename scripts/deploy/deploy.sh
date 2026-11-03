@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
-# Runs only after successful quality gates and the protected production environment.
+# Runs after successful quality gates and staging target checks. Laravel still
+# uses its hardened production runtime configuration inside this test stack.
 set -Eeuo pipefail
 
 sha=${1:-}
@@ -9,16 +10,16 @@ root=/opt/kostkita
 [[ "$(git rev-parse HEAD)" == "$sha" ]] || { echo 'Checkout does not match release SHA' >&2; exit 1; }
 git diff --quiet && git diff --cached --quiet || { echo 'Tracked checkout has local changes' >&2; exit 1; }
 expected_hostname=${KOSTKITA_EXPECTED_HOSTNAME:-}
-[[ -n "$expected_hostname" ]] || { echo 'Expected production hostname is not configured' >&2; exit 1; }
-[[ "$(hostname -s)" == "$expected_hostname" ]] || { echo 'Runner hostname does not match the production target' >&2; exit 1; }
+[[ -n "$expected_hostname" ]] || { echo 'Expected deployment hostname is not configured' >&2; exit 1; }
+[[ "$(hostname -s)" == "$expected_hostname" ]] || { echo 'Runner hostname does not match the configured target' >&2; exit 1; }
 [[ "${RUNNER_NAME:-}" == 'kost-kita' ]] || { echo 'GitHub runner name does not match kost-kita' >&2; exit 1; }
 command -v systemd-detect-virt >/dev/null || { echo 'Cannot verify the runner container type' >&2; exit 1; }
 [[ "$(systemd-detect-virt --container)" == lxc ]] || { echo 'Runner is not inside an LXC container' >&2; exit 1; }
 # Hostname, runner name, and IP are useful guards, but they do not prove the
-# Proxmox CT ID. Verify that identity out of band before enabling production.
-command -v ip >/dev/null || { echo 'Cannot verify the production target IP' >&2; exit 1; }
-ip -o -4 addr show | awk '$4 ~ /^192\.168\.0\.26\// { found=1 } END { exit !found }' || { echo 'Runner does not have the expected production IP 192.168.0.26' >&2; exit 1; }
-[[ -f "$env_file" && ! -L "$env_file" && "$env_file" == /* ]] || { echo 'Regular absolute production environment file required' >&2; exit 1; }
+# Proxmox CT ID. Verify that identity out of band before enabling the workflow.
+command -v ip >/dev/null || { echo 'Cannot verify the deployment target IP' >&2; exit 1; }
+ip -o -4 addr show | awk '$4 ~ /^192\.168\.0\.26\// { found=1 } END { exit !found }' || { echo 'Runner does not have the expected target IP 192.168.0.26' >&2; exit 1; }
+[[ -f "$env_file" && ! -L "$env_file" && "$env_file" == /* ]] || { echo 'Regular absolute deployment environment file required' >&2; exit 1; }
 [[ "${GITHUB_ACTIONS:-}" == true && "${GITHUB_EVENT_NAME:-}" == workflow_run && "${GITHUB_REF:-}" == refs/heads/main && -n "${GITHUB_EVENT_PATH:-}" && -f "$GITHUB_EVENT_PATH" ]] || { echo 'Deployment requires a GitHub Actions workflow_run on main' >&2; exit 1; }
 [[ -n "${GITHUB_TOKEN:-}" && -n "${GITHUB_API_URL:-}" && -n "${GITHUB_REPOSITORY:-}" && "${GITHUB_RUN_ID:-}" =~ ^[0-9]+$ && "${GITHUB_RUN_ATTEMPT:-}" =~ ^[0-9]+$ ]] || { echo 'GitHub run identity and read-only token required' >&2; exit 1; }
 command -v python3 >/dev/null
@@ -83,7 +84,7 @@ check_no_pending_migrations() {
         return 0
     fi
     if [[ "$output" == *Pending* ]]; then
-        echo 'Pending database migrations detected; automatic production deployment is stopped' >&2
+        echo 'Pending database migrations detected; automatic deployment is stopped' >&2
     else
         echo 'Could not verify database migration status' >&2
     fi
@@ -283,7 +284,7 @@ check_scheduler_tasks printf '%s\n' "$candidate_tasks" || exit 1
 check_main_head
 
 # Acquire the short activation lock after build and read-only preflights. This
-# lets stale CI runs exit before contending for production while ensuring image
+# lets stale CI runs exit before contending for the target while ensuring image
 # snapshots and service replacement happen as one serialized operation.
 exec 9>>"$root/deploy.lock" || { echo 'Could not open the host deployment lock file' >&2; exit 1; }
 lock_deadline=$((SECONDS + 1200))

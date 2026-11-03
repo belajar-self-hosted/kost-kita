@@ -192,7 +192,7 @@ printf '%s' "${HTTP_STATUS:-200}"
         self.env['TEST_IP_OUTPUT'] = '2: eth0 inet 192.168.0.99/24 scope global eth0'
         result = self.deploy()
         self.assertNotEqual(result.returncode, 0)
-        self.assertIn('expected production IP', result.stderr)
+        self.assertIn('expected target IP', result.stderr)
         self.assertFalse(self.log.exists())
 
     def test_wrong_runner_name_fails_before_docker_mutation(self):
@@ -212,7 +212,7 @@ printf '%s' "${HTTP_STATUS:-200}"
         result = self.deploy()
 
         self.assertNotEqual(result.returncode, 0)
-        self.assertIn('Regular absolute production environment file required', result.stderr)
+        self.assertIn('Regular absolute deployment environment file required', result.stderr)
         self.assertFalse(self.log.exists())
 
     def test_env_file_permissions_are_enforced(self):

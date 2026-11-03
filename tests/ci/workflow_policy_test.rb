@@ -37,9 +37,9 @@ class WorkflowPolicyTest < Minitest::Test
     assert_equal expected.sort, condition.split('&&').map(&:strip).sort
   end
 
-  def test_deployment_requires_target_runner_and_protected_environment
+  def test_deployment_targets_designated_runner_and_staging_environment
     assert_equal ['self-hosted', 'linux', 'x64', 'kostkita'], @deploy.fetch('runs-on')
-    assert_equal 'production', @deploy.fetch('environment')
+    assert_equal 'staging', @deploy.fetch('environment')
     assert_equal({ 'contents' => 'read' }, @workflow.fetch('permissions'))
     assert_equal '${{ vars.KOSTKITA_EXPECTED_HOSTNAME }}', @deploy.fetch('env').fetch('KOSTKITA_EXPECTED_HOSTNAME')
     assert_equal '${{ vars.KOSTKITA_MIN_FREE_DISK_BYTES }}', @deploy.fetch('env').fetch('KOSTKITA_MIN_FREE_DISK_BYTES')
@@ -111,9 +111,9 @@ class WorkflowPolicyTest < Minitest::Test
     refute runs.any? { |run| run.include?('composer setup') }, 'the setup script uses npm install instead of enforcing the lockfile'
   end
 
-  def test_all_deployments_share_one_group_and_run_the_tested_checkout
+  def test_all_staging_deployments_share_one_group_and_run_the_tested_checkout
     concurrency = @workflow.fetch('concurrency')
-    assert_equal 'kostkita-production-deploy', concurrency.fetch('group')
+    assert_equal 'kostkita-staging-deploy', concurrency.fetch('group')
     assert_equal false, concurrency.fetch('cancel-in-progress')
     assert_equal 'max', concurrency.fetch('queue')
     checkouts = @deploy.fetch('steps').select { |step| step.fetch('uses', '').start_with?('actions/checkout@') }

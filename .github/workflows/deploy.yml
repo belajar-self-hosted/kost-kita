@@ -6,10 +6,10 @@ on:
     types: [completed]
     branches: [main]
 
-# Keep deployment runs serialized without replacing pending runs. Stale-SHA
-# runs fail their current-main check when they reach the front of the queue.
+# Keep staging deployment runs serialized without replacing pending runs.
+# Stale-SHA runs fail their current-main check at the front of the queue.
 concurrency:
-  group: kostkita-production-deploy
+  group: kostkita-staging-deploy
   cancel-in-progress: false
   queue: max
 
@@ -28,9 +28,9 @@ jobs:
       vars.KOSTKITA_DEPLOYMENT_ENABLED == 'true'
     name: Build and deploy on the designated LXC runner
     runs-on: [self-hosted, linux, x64, kostkita]
-    # Configure required reviewers and restrict this environment to main in
-    # GitHub Settings before setting KOSTKITA_DEPLOYMENT_ENABLED=true.
-    environment: production
+    # Create the staging environment and restrict it to main before enabling
+    # KOSTKITA_DEPLOYMENT_ENABLED. Keep the flag off during initial setup.
+    environment: staging
     timeout-minutes: 120
     env:
       CANDIDATE_SHA: ${{ github.event.workflow_run.head_sha }}
