@@ -1,16 +1,16 @@
 # Panduan Deployment KostKita
 
-> **Status 3 November 2026:** TESTING/STAGING belum siap diaktifkan. Workflow lama ID 405389177 sudah disabled_manually dan tidak ada run nonterminal pada snapshot 23:37 WIB. main protected dengan CI check wajib; Environment staging belum dibuat. Node mamay, CT 10026, hostname kost-kita, IP 192.168.0.26 dan unit runner aktif di CT sudah diverifikasi dari output pemilik. Runtime Compose, penggunaan resource, deployment path, data dummy dan router ingress belum terverifikasi. Traefik mengaktifkan api.insecure=true serta mempublikasikan port 8080 pada semua interface. PRODUCTION READY tetap NO sampai semua syarat production termasuk backup/restore dipenuhi.
+> **Status 4 November 2026:** TESTING/STAGING belum siap diaktifkan. Workflow lama ID 405389177 masih disabled_manually; workflow tests ID 405373892 aktif dan tidak ada run nonterminal pada snapshot pemeriksaan. Ruleset `protect-main` mewajibkan PR dan check `ci` strict, tetapi approval wajib 0. Pemilik melaporkan Environment staging/variables telah diatur; API tidak mengizinkan verifikasi variabel tanpa autentikasi. Node mamay, CT 10026, hostname kost-kita, IP 192.168.0.26 dan unit runner di CT sudah diverifikasi dari output pemilik. Pemilik juga melaporkan Docker free `21593849856` bytes dan `1672456` inode, di atas threshold. Runtime Compose, deployment path, data dummy dan router ingress belum terverifikasi. Traefik mengaktifkan api.insecure=true serta mempublikasikan port 8080 pada semua interface; probe publik tidak membuktikan dashboard terekspos. PRODUCTION READY tetap NO sampai seluruh syarat production termasuk backup/restore dipenuhi.
 
-Branch kerja codex/cicd-production-remediation belum dipush. Dokumen ini mencatat prasyarat dan cara verifikasi; bukan bukti bahwa workflow lokal sudah berjalan pada GitHub/LXC atau izin deployment.
+Perubahan pada branch codex/cicd-production-remediation belum merged ke main. Dokumen ini mencatat prasyarat dan cara verifikasi; publikasi branch atau PR bukan bukti workflow sudah berjalan pada LXC atau izin deployment.
 
 ## Sebelum testing deployment
 
 1. Pastikan data pada target hanya dummy/testing, bukan data pribadi atau transaksi nyata.
 2. Cocokkan Docker Compose services, database/scheduler/worker, active image SHA, deployment directory dan resource usage melalui output read-only dari LXC.
 3. Minta pemilik ingress meninjau dashboard/API Traefik insecure pada port 8080, Docker provider/socket, firewall, router file, Cloudflare Tunnel dan origin.
-4. Pastikan workflow lama tetap disabled_manually. Pertahankan KOSTKITA_DEPLOYMENT_ENABLED tidak ada atau false sampai staging siap.
-5. Buat GitHub Environment staging dengan deployment branch dibatasi ke main. Isi expected hostname dan ambang disk/inode berdasarkan pengukuran LXC. Jangan gunakan environment production untuk fase uji.
+4. Pastikan workflow lama tetap disabled_manually. Pertahankan Repository variable `KOSTKITA_DEPLOYMENT_ENABLED=false`; pemilik melaporkan nilai ini sudah disetel.
+5. Verifikasi Environment `staging` membatasi deployment ke main dan memuat hostname `kost-kita`, disk `10737418240` bytes, inode `500000`. Nilai konfigurasi tersebut belum dapat diverifikasi melalui API tanpa autentikasi.
 
 ## Topologi dan target
 
@@ -31,7 +31,7 @@ Workflow lokal hanya menerima keberhasilan workflow tests ID 405373892 untuk pus
 
 **Penting:** GitHub Environment staging tidak mengisolasi runtime. Workflow menunjuk ke /opt/kostkita/.env dan deployment script mengganti Compose stack KostKita beserta database/volume yang sudah ada. Hostname publik merespons saat ini, tetapi origin Cloudflare belum dibuktikan. Pastikan data target dummy dan tetapkan jendela gangguan/pemberitahuan tester sebelum flag true karena aktivasi non-atomik. Stack staging terpisah dengan project, database, volume, env dan ingress belum disiapkan; gunakan jika endpoint tidak boleh terganggu.
 
-Pemilik harus mengonfirmasi YAML remote sudah versi yang direview, workflow lama masih disabled, CI/main ruleset masih aktif, Environment staging tersedia, target hostname/ambang kapasitas terukur, serta tidak ada run main yang tertunda. Set repository variable deployment false/tidak ada selama perubahan workflow masuk. Mengubahnya menjadi true tidak memulai workflow sendiri, tetapi CI tests main berikutnya yang sukses dapat melakukan deployment.
+Sebelum aktivasi di masa depan, konfirmasi YAML remote sudah versi yang direview, workflow lama masih disabled, CI/ruleset main masih aktif, Environment staging dan variables sesuai, serta tidak ada run main yang tertunda. Set repository variable deployment tetap false selama perubahan workflow masuk. Mengubahnya menjadi true tidak memulai workflow sendiri, tetapi CI tests main berikutnya yang sukses dapat melakukan deployment.
 
 Ruleset main yang terlihat mewajibkan 0 approval. Sebelum mengaktifkan runner Docker pada branch main yang publik, atur main agar memerlukan minimal satu approving review; reviewer harus memeriksa workflow, deployment script, Dockerfile dan Compose. Setelah merge dengan flag false, verifikasi YAML dan status workflow di Actions; bila workflow tetap disabled_manually, enable hanya setelah review dan no-run check baru. Workflow disabled tidak menerima trigger sampai di-enable ([GitHub Docs](https://docs.github.com/en/actions/how-tos/manage-workflow-runs/disable-and-enable-workflows)).
 

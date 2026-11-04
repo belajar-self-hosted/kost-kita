@@ -1,13 +1,14 @@
 # Deployment & Rollback Plan — KostKita
 
-Diperbarui 3 November 2026. Ini rencana testing/staging, bukan bukti aktivasi atau otorisasi deployment. Arsitektur: push main → GitHub Actions quality gates → runner LXC aplikasi → build Docker Compose lokal → deployment → health/SHA verification. Tanpa GHCR.
+Diperbarui 4 November 2026. Ini rencana testing/staging, bukan bukti aktivasi atau otorisasi deployment. Arsitektur: push main → GitHub Actions quality gates → runner LXC aplikasi → build Docker Compose lokal → deployment → health/SHA verification. Tanpa GHCR.
 
 ## Status saat ini
 
-- Workflow lama ID 405389177 disabled_manually; API pukul 23:37 WIB menunjukkan 0 queued/in_progress/waiting/requested/pending.
-- main protected; ruleset aktif mensyaratkan PR dan check ci strict, tetapi meminta 0 approval. Sebelum runner diaktifkan, atur main agar memerlukan minimal satu approving review dan pastikan reviewer memeriksa workflow/deploy/Compose. Environment GitHub belum ada.
+- Workflow lama ID 405389177 disabled_manually; pemeriksaan API terbaru menunjukkan tidak ada queued/in_progress/waiting/requested/pending run.
+- main protected; ruleset `protect-main` aktif mensyaratkan PR dan check `ci` strict, tetapi meminta 0 approval. Sebelum merge, atur main agar memerlukan minimal satu approving review dan pastikan reviewer memeriksa workflow/deploy/Compose. Pemilik melaporkan Environment staging dan variables telah dikonfigurasi; konfirmasi API masih memerlukan sesi terautentikasi.
 - Node mamay, CT 10026, hostname kost-kita, IP 192.168.0.26, dan runner unit aktif dalam CT sudah cocok dari output pemilik.
 - Compose runtime, active SHA, deployment path, penggunaan resource serta data dummy belum dibuktikan.
+- Pemilik melaporkan DockerRootDir `/var/lib/docker` memiliki `21593849856` bytes dan `1672456` inode tersedia; threshold staging adalah `10737418240` bytes dan `500000` inode. Build peak belum diukur.
 - Gateway Traefik mempublikasikan api.insecure dashboard pada port 8080 ke semua interface; route Cloudflare/origin belum terbukti.
 - Backup testing DEFERRED — ACCEPTED RISK; data dapat hilang. Backup/restore wajib sebelum production.
 
@@ -18,8 +19,8 @@ Diperbarui 3 November 2026. Ini rencana testing/staging, bukan bukti aktivasi at
 1. Pastikan database/file hanya berisi data dummy/testing.
 2. Dari CT 10026, ulangi tanpa pager: docker ps/compose ls, status DB/scheduler/worker, df/df -i/free, Docker filesystem, metadata deployment directory dan image/revision. Jangan baca/print .env.
 3. Minta pemilik ingress meninjau api.insecure, listener 8080, Docker provider/socket, firewall dan Cloudflare router/tunnel; cocokkan origin ke 192.168.0.26:8080.
-4. Review workflow branch codex/cicd-production-remediation. Ia menunggu workflow tests ID 405373892 sukses untuk push main/repo/SHA sama, tanpa workflow_dispatch, dengan concurrency kostkita-staging-deploy dan deployment flag default-off.
-5. Buat GitHub Environment staging yang membatasi branch ke main. Set expected hostname dan batas disk/inode dari pengukuran. Pertahankan repository variable KOSTKITA_DEPLOYMENT_ENABLED tidak ada atau false selama merge dan pemeriksaan awal.
+4. Review PR branch codex/cicd-production-remediation. Workflow menunggu tests ID 405373892 sukses untuk push main/repo/SHA sama, tanpa workflow_dispatch, dengan concurrency kostkita-staging-deploy dan deployment flag default-off.
+5. Verifikasi GitHub Environment staging membatasi branch ke main dan variabelnya sesuai laporan pemilik: hostname `kost-kita`, disk `10737418240` bytes, inode `500000`. Konfirmasi nilai secara terautentikasi; pertahankan Repository variable `KOSTKITA_DEPLOYMENT_ENABLED=false` selama merge dan pemeriksaan awal.
 6. Merge workflow setelah review dengan flag tetap false; jalankan CI pada merge commit dan verifikasi deploy job dilewati. Jika workflow masih disabled_manually, pastikan YAML remote benar dan flag false, lalu enable hanya workflow yang sudah ditinjau. Workflow disabled tidak menerima trigger sampai di-enable. Ulangi no-run check, pastikan legacy workflow tetap nonaktif, CI rule aktif, dan tidak ada CI main tertunda sebelum mengatur flag true. Flag true membuat CI main berikutnya yang sukses dapat deploy.
 7. Backup tidak perlu dibangun untuk testing menurut keputusan pemilik. Risiko kehilangan data harus dipahami; jangan gunakan data nyata.
 

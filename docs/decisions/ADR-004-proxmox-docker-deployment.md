@@ -34,7 +34,7 @@ Alur target: Cloudflare → Cloudflare Tunnel pada gateway → Traefik → aplik
 - Target flow: push main → Actions quality gates → runner pada CT 10026 → checkout tested SHA → local Docker Compose build → deploy → SHA/health verification. Tanpa GHCR.
 - Workflow lama ID 405389177 sekarang disabled_manually dan snapshot API 23:37 WIB tidak menunjukkan run nonterminal.
 - main dilindungi ruleset aktif yang mewajibkan PR dan status ci strict; approval count 0. Sebelum runner Docker diaktifkan, atur main agar memerlukan minimal satu approving review dan pastikan perubahan workflow/deployment/Compose ditinjau. Actions permission dan runner inventory masih butuh autentikasi.
-- Workflow remediasi lokal tidak memiliki workflow_dispatch, memerlukan CI sukses untuk push main/SHA sama, concurrency tunggal, dan deployment flag default-off. Gunakan GitHub Environment staging saat testing; environment itu belum dibuat dan workflow lokal belum dipush.
+- Workflow remediasi di branch kerja tidak memiliki workflow_dispatch, memerlukan CI sukses untuk push main/SHA sama, concurrency tunggal, dan deployment flag default-off. Pemilik melaporkan GitHub Environment staging dan variables telah disetel, tetapi nilainya belum diverifikasi melalui akses terautentikasi; branch belum merged ke main.
 - Environment bernama staging tidak mengisolasi runtime. Workflow menggunakan /opt/kostkita/.env dan Compose stack/volume KostKita yang sudah ada pada CT 10026; deployment akan mengganti stack tersebut. Data harus dummy. Project, database, volume, env dan ingress staging yang terpisah belum tersedia.
 - APP_ENV=production dan APP_DEBUG=false tetap konfigurasi runtime Laravel yang aman. Nama GitHub Environment staging hanya mengidentifikasi target uji.
 - Data target harus dummy/testing. Status data saat ini belum diverifikasi.
@@ -46,7 +46,7 @@ Alur target: Cloudflare → Cloudflare Tunnel pada gateway → Traefik → aplik
 - Skrip berhenti jika migration pending dan tidak menjalankan migration atau migrate:rollback otomatis. Review kompatibilitas release lama/baru dan migration secara terpisah.
 - Rollback lokal mencoba memulihkan image app/web/scheduler di atas Compose file kandidat; tidak memulihkan config, schema atau data.
 
-> **Readiness:** Testing/staging belum siap karena workflow lokal belum remote, service/resource/path dan data dummy belum diverifikasi, Environment staging belum ada, dan gateway memiliki mismatch keamanan. Production belum siap, termasuk karena backup/restore belum dipenuhi. Lihat [Infrastructure Verification Report](../../INFRASTRUCTURE-VERIFICATION-REPORT.md), [checklist](../../PRODUCTION-READINESS-CHECKLIST.md), dan [rencana remediasi](../../REMEDIATION-PLAN.md).
+> **Readiness:** Testing/staging belum siap karena workflow branch belum merged, service/path dan data dummy belum diverifikasi, GitHub variables masih owner-reported, dan gateway memiliki mismatch keamanan. Docker disk/inode dilaporkan memenuhi threshold. Production belum siap, termasuk karena backup/restore belum dipenuhi. Lihat [Infrastructure Verification Report](../../INFRASTRUCTURE-VERIFICATION-REPORT.md), [checklist](../../PRODUCTION-READINESS-CHECKLIST.md), dan [rencana remediasi](../../REMEDIATION-PLAN.md).
 
 ## Konsekuensi
 

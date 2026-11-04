@@ -1,10 +1,10 @@
 # Production Impact Assessment — KostKita
 
-Diperbarui 3 November 2026. Tidak ada runtime production/staging yang diubah dari sesi ini.
+Diperbarui 4 November 2026. Pemilik melaporkan GitHub Environment/variables staging telah disetel dan Docker free space berada di atas threshold. Nilai GitHub belum diverifikasi melalui akses terautentikasi. Tidak ada runtime production/staging yang diubah dari sesi ini.
 
 ## Readiness
 
-- **TESTING/STAGING READY: BELUM SIAP.** Buktikan dataset dummy, lengkapi output runtime CT 10026, buat Environment staging, dan tinjau keamanan ingress. Workflow lokal belum diterapkan ke GitHub.
+- **TESTING/STAGING READY: BELUM SIAP.** Buktikan dataset dummy dan runtime CT 10026, verifikasi Environment/variables yang dilaporkan, serta tinjau keamanan ingress. Workflow branch belum diterapkan ke GitHub.
 - **PRODUCTION READY: TIDAK SIAP.** Backup/restore dan gerbang production lain belum dipenuhi.
 - **Backup testing: DEFERRED — ACCEPTED RISK.** Pemilik menerima kehilangan seluruh data percobaan. Tidak ada backup atau restore yang diasumsikan tersedia.
 
@@ -15,7 +15,7 @@ Diperbarui 3 November 2026. Tidak ada runtime production/staging yang diubah dar
 | Kehilangan data testing          | Data DB/file dapat hilang dan tidak dipulihkan.                                                                       | Diterima hanya untuk testing; gunakan dummy data. Tidak ada volume/DB dihapus.                                                                             |
 | Data nyata di lingkungan testing | Data pribadi/transaksi dapat terekspos atau hilang.                                                                   | UNVERIFIED; pastikan dummy-only sebelum deployment dan hentikan jika ada data operasional nyata.                                                           |
 | Workflow lama                    | Dapat melakukan manual dispatch, migration paksa, in-place deployment dan prune global.                               | ID 405389177 disabled_manually; snapshot 23:37 WIB tidak ada run nonterminal. Jangan aktifkan kembali.                                                     |
-| Workflow baru belum remote       | Branch lokal belum mengubah GitHub.                                                                                   | Default-off, tanpa workflow_dispatch; buat Environment staging dan verifikasi remote sebelum flag enable.                                                  |
+| Workflow baru belum di main      | Workflow branch belum merged ke `main`.                                                                               | Default-off, tanpa workflow_dispatch; Environment/variables staging dilaporkan pemilik tetapi perlu verifikasi terautentikasi. Jangan ubah flag false.     |
 | Build dan Compose activation     | Resource build berbagi LXC dengan aplikasi; aktivasi beberapa service tidak atomik dan dapat downtime/versi campuran. | Resource pemakaian belum diketahui; ukur dan rehearsal.                                                                                                    |
 | Availability endpoint publik     | Domain merespons; workflow akan mengganti stack Compose yang sama.                                                    | Durasi gangguan belum diketahui. Tetapkan jendela dan beri tahu tester sebelum aktivasi; bila layanan harus selalu tersedia, perlu stack staging terpisah. |
 | Migration                        | Release dengan migration pending berhenti; migration/rollback database tidak otomatis.                                | Tinjau kompatibilitas dan jalankan tindakan terpisah; jangan otomatis migration destruktif.                                                                |
@@ -34,7 +34,7 @@ GitHub Environment bernama staging bukan isolasi runtime. Workflow memakai /opt/
 
 1. Pastikan data target dummy dan hasil runtime CT 10026 cocok dengan repository.
 2. Biarkan repository variable KOSTKITA_DEPLOYMENT_ENABLED tidak ada atau false ketika perubahan workflow masuk.
-3. Buat Environment staging yang membatasi branch main serta isi hostname dan ambang resource dari pengukuran.
+3. Verifikasi Environment `staging` membatasi branch `main`, hostname `kost-kita`, thresholds disk `10737418240` bytes dan inode `500000`. Nilai tersebut dilaporkan pemilik; endpoint GitHub variables memerlukan autentikasi untuk konfirmasi. Docker free space yang dilaporkan adalah `21593849856` bytes dan `1672456` inode.
 4. Sebelum flag true, cek lagi legacy disabled dan tidak ada CI main tertunda. Flag true berarti workflow tests main berikutnya yang sukses dapat memicu deployment.
 5. Pantau workflow dan verifikasi candidate SHA serta health. Jika gagal, pipeline harus gagal; jangan lewati quality gate atau melakukan migration destruktif.
 6. Tanpa backup, kehilangan data testing mungkin permanen.
