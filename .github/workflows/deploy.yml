@@ -2,113 +2,68 @@ name: Local In-LXC CI/CD Deployment
 
 on:
   workflow_run:
-    workflows:
-      - tests
-    types:
-      - completed
-    branches:
-      - main
-  workflow_dispatch:
+    workflows: [tests]
+    types: [completed]
+    branches: [main]
 
+# Keep staging deployment runs serialized without replacing pending runs.
+# Stale-SHA runs fail their current-main check at the front of the queue.
 concurrency:
-  group: production-deploy-${{ github.ref }}
+  group: kostkita-staging-deploy
   cancel-in-progress: false
+  queue: max
 
 permissions:
   contents: read
 
 jobs:
   deploy:
-    if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
-    name: Build & In-Place Deploy on LXC 10026
+    if: >-
+      github.event.workflow_run.conclusion == 'success' &&
+      github.event.workflow_run.event == 'push' &&
+      github.event.workflow_run.head_branch == 'main' &&
+      github.event.workflow_run.head_repository.full_name == github.repository &&
+      github.event.workflow_run.workflow_id == 405373892 &&
+      github.event.workflow_run.name == 'tests' &&
+      vars.KOSTKITA_DEPLOYMENT_ENABLED == 'true'
+    name: Build and deploy on the designated LXC runner
     runs-on: [self-hosted, linux, x64, kostkita]
-
+    # Create the staging environment and restrict it to main before enabling
+    # KOSTKITA_DEPLOYMENT_ENABLED. Keep the flag off during initial setup.
+    environment: staging
+    timeout-minutes: 120
     env:
-      APP_DIR: /opt/kostkita/src
-      ENV_FILE: /opt/kostkita/.env
-      APP_PORT: 8080
-      APP_IP: 192.168.0.26
+      CANDIDATE_SHA: ${{ github.event.workflow_run.head_sha }}
+      KOSTKITA_EXPECTED_HOSTNAME: ${{ vars.KOSTKITA_EXPECTED_HOSTNAME }}
+      KOSTKITA_MIN_FREE_DISK_BYTES: ${{ vars.KOSTKITA_MIN_FREE_DISK_BYTES }}
+      KOSTKITA_MIN_FREE_INODES: ${{ vars.KOSTKITA_MIN_FREE_INODES }}
 
     steps:
-      - name: Checkout Source Code
+      - name: Checkout the tested commit
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
+          ref: ${{ github.event.workflow_run.head_sha }}
+          path: candidate
+          persist-credentials: false
 
-      - name: Verify Environment File Exists
+      - name: Checkout current main for stale-run check
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: main
+          path: current-main
+          persist-credentials: false
+
+      - name: Verify exact tested SHA is current main
+        shell: bash
         run: |
-          if [ ! -f "$ENV_FILE" ]; then
-            echo "❌ Error: Production environment file $ENV_FILE not found on host!"
-            echo "Pastikan file $ENV_FILE sudah dibuat dengan permission 600 sebelum deploy."
-            exit 1
-          fi
-          echo "✅ Production environment file $ENV_FILE terverifikasi."
+          set -euo pipefail
+          [[ "$CANDIDATE_SHA" =~ ^[0-9a-f]{40}$ ]]
+          test "$(git -C candidate rev-parse HEAD)" = "$CANDIDATE_SHA"
+          test "$(git -C current-main rev-parse HEAD)" = "$CANDIDATE_SHA"
 
-      - name: Sync Source Code to Production Directory
-        run: |
-          echo ">>> Mensinkronkan repository ke $APP_DIR..."
-          mkdir -p "$APP_DIR"
-          rsync -av --no-o --no-g --delete \
-            --exclude='.env' \
-            --exclude='.env.*' \
-            --exclude='.git' \
-            --exclude='.github' \
-            ./ "$APP_DIR/"
-
-      - name: Validate Compose Configuration
-        working-directory: /opt/kostkita/src
-        run: |
-          echo ">>> Validasi konfigurasi Docker Compose..."
-          docker compose --env-file "$ENV_FILE" config -q
-
-      - name: Build Docker Images Locally
-        working-directory: /opt/kostkita/src
-        run: |
-          echo ">>> Menjalankan build Docker image lokal (in-place tanpa GHCR)..."
-          docker compose --env-file "$ENV_FILE" build --pull
-
-      - name: Start Database & Run Migrations
-        working-directory: /opt/kostkita/src
-        run: |
-          echo ">>> Menyalakan service database PostgreSQL..."
-          docker compose --env-file "$ENV_FILE" up -d db
-
-          echo ">>> Menunggu PostgreSQL siap..."
-          until docker compose --env-file "$ENV_FILE" exec -T db sh -lc 'pg_isready -U "$POSTGRES_USER" -d "$POSTGRES_DB"'; do
-            echo "Menunggu PostgreSQL siap..."
-            sleep 2
-          done
-
-          echo ">>> Menjalankan migrasi database..."
-          docker compose --env-file "$ENV_FILE" run --rm app php artisan migrate --force
-
-      - name: Launch All Services
-        working-directory: /opt/kostkita/src
-        run: |
-          echo ">>> Memulai stack aplikasi (app, web, db, scheduler)..."
-          docker compose --env-file "$ENV_FILE" up -d --remove-orphans
-          docker compose --env-file "$ENV_FILE" ps
-
-      - name: Application Health Check
-        working-directory: /opt/kostkita/src
-        run: |
-          echo ">>> Menunggu service stabil dan melakukan health check..."
-          sleep 5
-
-          echo ">>> Menguji HTTP health check endpoint (/up)..."
-          curl -fsS --retry 5 --retry-delay 3 "http://$APP_IP:$APP_PORT/up" || curl -fsS --retry 5 --retry-delay 3 "http://127.0.0.1:$APP_PORT/up" || {
-            echo "❌ Health check gagal! Service tidak merespons di port $APP_PORT."
-            docker compose --env-file "$ENV_FILE" logs --tail=50
-            exit 1
-          }
-
-          echo ">>> Verifikasi status migrasi database..."
-          docker compose --env-file "$ENV_FILE" exec -T app php artisan migrate:status
-
-          echo "✅ Deployment dan Health Check berhasil!"
-
-      - name: Post-Deployment Storage Hygiene
-        if: always()
-        run: |
-          echo ">>> Membersihkan sisa dangling image Docker..."
-          docker image prune -f
+      - name: Build, verify, and activate release
+        working-directory: candidate
+        shell: bash
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: bash scripts/deploy/deploy.sh "$CANDIDATE_SHA" /opt/kostkita/.env

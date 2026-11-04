@@ -11,13 +11,49 @@ permissions:
 
 jobs:
   ci:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_DB: kostkita_ci
+          POSTGRES_USER: kostkita_ci
+          POSTGRES_PASSWORD: ci_only_password
+        ports:
+          - 5432/tcp
+        options: >-
+          --health-cmd "pg_isready -U kostkita_ci -d kostkita_ci"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
 
     steps:
       - name: Checkout code
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
+          fetch-depth: 0
           persist-credentials: false
+
+      - name: Verify deployment workflow policy
+        run: ruby tests/ci/workflow_policy_test.rb
+
+      - name: Protect applied database migrations from edits
+        run: ruby tests/ci/migration_policy_test.rb
+
+      - name: Verify deployment safety
+        run: python3 -m unittest discover -s tests/deployment -p 'test_*.py'
+
+      - name: Verify container storage permission policy
+        run: ruby tests/ci/storage_policy_test.rb
+
+      - name: Install pinned GitHub Actions workflow validator
+        run: |
+          set -euo pipefail
+          go install github.com/rhysd/actionlint/cmd/actionlint@v1.7.12
+          echo "$(go env GOPATH)/bin" >> "$GITHUB_PATH"
+
+      - name: Validate GitHub Actions workflow syntax
+        run: actionlint .github/workflows/*.yml
 
       - name: Setup PHP
         uses: shivammathur/setup-php@eb7c497e18156a6bbabfef1d3a82760b9eda3962 # v2
@@ -25,14 +61,51 @@ jobs:
           php-version: '8.3'
           tools: composer:v2
           coverage: none
+          extensions: pdo_pgsql, pcntl
 
       - name: Setup Node
         uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: '22'
 
-      - name: Setup Application
-        run: composer setup
+      - name: Install PHP dependencies
+        run: composer install --no-interaction --prefer-dist --no-progress
+
+      - name: Prepare isolated SQLite application database
+        run: |
+          set -euo pipefail
+          cp .env.example .env
+          touch database/database.sqlite
+          php artisan key:generate --force --no-interaction
+          php artisan migrate --force --no-interaction
+
+      - name: Install locked Node dependencies
+        run: npm ci
+
+      - name: Build frontend assets
+        run: npm run build
 
       - name: Run CI Checks
         run: composer ci:check
+
+      - name: Run PostgreSQL concurrency acceptance on disposable service
+        env:
+          APP_ENV: testing
+          DB_CONNECTION: pgsql
+          DB_URL: ''
+          DB_HOST: 127.0.0.1
+          DB_PORT: ${{ job.services.postgres.ports['5432'] }}
+          DB_DATABASE: kostkita_ci
+          KOSTKITA_PG_TEST_DATABASE: kostkita_ci
+          DB_USERNAME: kostkita_ci
+          DB_PASSWORD: ci_only_password
+          DB_SSLMODE: disable
+          CACHE_STORE: array
+          SESSION_DRIVER: array
+          QUEUE_CONNECTION: sync
+        run: |
+          set -euo pipefail
+          php -r "if (!extension_loaded('pdo_pgsql') || !extension_loaded('pcntl')) { exit(1); }"
+          php artisan config:clear
+          php artisan migrate --force --no-interaction
+          vendor/bin/phpunit -c phpunit.postgres.xml

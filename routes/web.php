@@ -19,6 +19,14 @@ use App\Http\Controllers\Platform\PlatformDashboardController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
+Route::get('/health/revision', function () {
+    $file = config('app.release_file', base_path('release.sha'));
+    $revision = is_file($file) ? trim((string) file_get_contents($file)) : '';
+    abort_unless((bool) preg_match('/\A[a-f0-9]{40}\z/', $revision), 503);
+
+    return response($revision, 200, ['Content-Type' => 'text/plain', 'Cache-Control' => 'no-store, private']);
+});
+
 Route::inertia('/', 'Welcome')->name('home');
 
 Route::get('dashboard', function (Request $request) {

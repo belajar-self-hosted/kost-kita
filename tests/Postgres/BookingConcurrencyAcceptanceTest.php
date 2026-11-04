@@ -20,14 +20,6 @@ use Throwable;
 
 class BookingConcurrencyAcceptanceTest extends TestCase
 {
-    private ?int $tenantId = null;
-
-    private ?int $ownerId = null;
-
-    private ?int $propertyId = null;
-
-    private ?int $roomId = null;
-
     protected function setUp(): void
     {
         $requiredDatabase = getenv('KOSTKITA_PG_TEST_DATABASE');
@@ -46,32 +38,9 @@ class BookingConcurrencyAcceptanceTest extends TestCase
         }
     }
 
-    protected function tearDown(): void
-    {
-        if ($this->tenantId !== null) {
-            DB::table('audit_logs')->where('tenant_id', $this->tenantId)->delete();
-            DB::table('invoice_adjustments')->where('tenant_id', $this->tenantId)->delete();
-            DB::table('booking_grace_extensions')->where('tenant_id', $this->tenantId)->delete();
-            DB::table('tenancy_extensions')->where('tenant_id', $this->tenantId)->delete();
-            DB::table('invoice_lines')->where('tenant_id', $this->tenantId)->delete();
-            DB::table('invoices')->where('tenant_id', $this->tenantId)->delete();
-            DB::table('deposit_accounts')->where('tenant_id', $this->tenantId)->delete();
-            DB::table('tenancies')->where('tenant_id', $this->tenantId)->delete();
-            DB::table('maintenance_jobs')->where('tenant_id', $this->tenantId)->delete();
-            DB::table('bookings')->where('tenant_id', $this->tenantId)->delete();
-            DB::table('residents')->where('tenant_id', $this->tenantId)->delete();
-            DB::table('rooms')->where('tenant_id', $this->tenantId)->delete();
-            DB::table('room_types')->where('tenant_id', $this->tenantId)->delete();
-            DB::table('properties')->where('tenant_id', $this->tenantId)->delete();
-            DB::table('tenants')->where('id', $this->tenantId)->delete();
-            DB::table('users')->where('id', $this->ownerId)->delete();
-        }
-
-        parent::tearDown();
-    }
-
     public function test_two_concurrent_confirmations_cannot_create_overlapping_confirmed_bookings(): void
     {
+        $this->travelTo(Carbon::parse('2026-11-09 12:00:00', 'Asia/Jakarta'));
         ['owner' => $owner, 'tenant' => $tenant, 'property' => $property, 'room' => $room] = $this->createCommittedRoomFixture();
         $first = $this->pendingBooking($owner, $tenant, $property, $room, '2026-11-10', '2026-12-10', 'Concurrent One');
         $second = $this->pendingBooking($owner, $tenant, $property, $room, '2026-11-15', '2026-12-15', 'Concurrent Two');
@@ -95,7 +64,7 @@ class BookingConcurrencyAcceptanceTest extends TestCase
             'confirmed_at' => Carbon::parse('2026-11-09 12:00:00', 'Asia/Jakarta')->utc(),
             'check_in_deadline_at' => Carbon::parse('2026-11-12 00:00:00', 'Asia/Jakarta')->utc(),
         ]);
-        $newBooking = $this->pendingBooking($owner, $tenant, $property, $room, '2026-11-10', '2026-12-10', 'New Booking');
+        $newBooking = $this->pendingBooking($owner, $tenant, $property, $room, '2026-11-11', '2026-12-10', 'New Booking');
         $this->travelTo(Carbon::parse('2026-11-12 00:00:00', 'Asia/Jakarta'));
 
         $results = $this->runConcurrent([
@@ -214,10 +183,6 @@ class BookingConcurrencyAcceptanceTest extends TestCase
             'code' => 'PG-'.bin2hex(random_bytes(3)),
             'operational_status' => 'rentable',
         ]);
-        $this->tenantId = $tenant->id;
-        $this->ownerId = $owner->id;
-        $this->propertyId = $property->id;
-        $this->roomId = $room->id;
 
         return compact('owner', 'tenant', 'property', 'room');
     }

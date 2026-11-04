@@ -1,0 +1,10 @@
+self-hosted-runner:
+  labels:
+    - kostkita
+
+paths:
+  .github/workflows/deploy.yml:
+    # GitHub supports queue: max; actionlint v1.7.12 has not added this key.
+    # The Ruby workflow policy test validates the key and value separately.
+    ignore:
+      - 'unexpected key "queue" for "concurrency" section'
